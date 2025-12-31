@@ -1,0 +1,7 @@
+{
+  "name": "CyberWait™",
+  "description": "Full-stack UI for a Humanoid Waiter System featuring real-time robot tracking, customer ordering, and admin management.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

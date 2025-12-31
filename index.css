@@ -1,0 +1,262 @@
+
+/* index.css - Immersive Presentation Redesign */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+
+:root {
+    --app-bg: #09090b; 
+    --stage-bg: #18181b; 
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --accent-color: #ffffff;
+    --accent-bg: #27272a;
+    
+    --input-bg: rgba(24, 24, 27, 0.8);
+    --border-color: #27272a;
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+html, body {
+    height: 100%; margin: 0; padding: 0;
+    font-family: var(--font-sans);
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+#root {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.immersive-app {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    perspective: 1500px;
+    overflow: hidden;
+}
+
+.creator-credit {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 101;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+    backdrop-filter: blur(4px);
+}
+
+.creator-credit:hover {
+    opacity: 1;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.stage-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    z-index: 0;
+}
+
+.empty-state.fade-out {
+    opacity: 0;
+    transform: scale(1.1);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.8s, transform 0.8s, visibility 0s 0.8s;
+}
+
+.empty-content h1 { 
+    color: var(--text-primary); 
+    font-weight: 800; 
+    font-size: 6rem;
+    margin: 0;
+    background: linear-gradient(to bottom right, #fff, #aaa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+}
+
+.surprise-button {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 99px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.3s ease;
+}
+.surprise-button:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+
+.session-group {
+    position: absolute;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s;
+    transform-style: preserve-3d;
+}
+
+.session-group.active-session { opacity: 1; z-index: 10; pointer-events: auto; }
+.session-group.past-session { transform: translateX(-120%) translateZ(-300px); opacity: 0; }
+.session-group.future-session { transform: translateX(120%) translateZ(-300px); opacity: 0; }
+
+.artifact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+    width: 90%; max-width: 1800px;
+    height: 65vh;
+}
+
+.artifact-card {
+    position: relative;
+    background: #000;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.artifact-header {
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.5);
+    display: flex; justify-content: center;
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.artifact-card-inner {
+    flex: 1; position: relative; background: #fff;
+    width: 100%; height: 100%;
+}
+
+.artifact-iframe {
+    width: 100%; height: 100%; border: none; display: block;
+    pointer-events: none;
+}
+
+.stage-container.mode-focus .artifact-card { opacity: 0; pointer-events: none; }
+
+.stage-container.mode-focus .artifact-card.focused {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 95vw; max-width: 1400px;
+    height: 85vh;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    opacity: 1;
+    pointer-events: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    box-shadow: 0 100px 200px rgba(0,0,0,0.9);
+}
+
+/* Device Frame look for Focused state */
+.stage-container.mode-focus .artifact-card.focused::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 32px;
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
+    z-index: 10;
+}
+.stage-container.mode-focus .artifact-card.focused .artifact-card-inner {
+    margin-top: 32px;
+}
+.stage-container.mode-focus .artifact-card.focused .artifact-iframe {
+    pointer-events: auto;
+}
+
+.floating-input-container {
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+    display: flex; justify-content: center;
+    z-index: 100;
+    padding: 0 20px;
+    pointer-events: none;
+}
+
+.input-wrapper {
+    pointer-events: auto;
+    width: 100%; max-width: 600px;
+    background: var(--input-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 10px 10px 10px 28px;
+    display: flex; align-items: center;
+    gap: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.input-wrapper input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text-primary); font-size: 1rem;
+}
+
+.action-bar {
+    position: absolute;
+    bottom: 110px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    opacity: 0; transform: translateY(20px);
+    transition: all 0.4s ease-out 0.2s;
+    z-index: 90; pointer-events: none;
+}
+.action-bar.visible { opacity: 1; transform: translateY(0); }
+
+.nav-handle {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: transparent; border: none; color: var(--text-secondary);
+    padding: 40px; cursor: pointer; z-index: 80; opacity: 0.3;
+}
+.nav-handle:hover { opacity: 1; color: #fff; }
+.nav-handle.left { left: 20px; }
+.nav-handle.right { right: 20px; }
+
+@media (max-width: 1024px) {
+    .artifact-grid {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        height: auto;
+        overflow-y: auto;
+    }
+    .artifact-card { min-height: 400px; }
+    .empty-content h1 { font-size: 3rem; }
+}
