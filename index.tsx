@@ -16,18 +16,22 @@ interface CartItem {
   quantity: number;
 }
 
-const MENU_ITEMS: MenuItem[] = [
+// API Configuration
+const API_URL = 'http://localhost:5000/api';
+
+// Fallback static menu items (used if API fails)
+const FALLBACK_MENU_ITEMS: MenuItem[] = [
   { id: 1, name: "Neon Sushi Roll", category: "Meals", price: 18.5, description: "Fresh salmon with electric wasabi pearls and avocado.", image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400" },
   { id: 2, name: "Cypher Burger", category: "Meals", price: 15.0, description: "A5 Wagyu beef with a signature digital glaze on brioche.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" },
-  { id: 11, name: "Nebula Ramen", category: "Meals", price: 19.0, description: "Midnight-blue broth with glowing bamboo shoots and soft-boiled egg.", image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400" },
-  { id: 12, name: "Binary Tacos", category: "Meals", price: 14.5, description: "One mild, one wild. Precision-balanced carnitas with neon lime.", image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400" },
-  { id: 13, name: "Pixel Pizza", category: "Meals", price: 17.0, description: "Algorithmically placed pepperonis on a perfect square crust.", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400" },
-  { id: 3, name: "Zen Garden Salad", category: "Meals", price: 12.5, description: "Organic greens with micro-herbs and citrus mist dressing.", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400" },
-  { id: 5, name: "Quantum Espresso", category: "Drinks", price: 6.5, description: "Double shot of single-origin smart brew beans.", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400" },
-  { id: 15, name: "Void Cola", category: "Drinks", price: 5.0, description: "Zero-sugar, deep-black sparkling refreshment with hint of vanilla.", image: "https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=400" },
-  { id: 8, name: "Hologram Cake", category: "Desserts", price: 12.0, description: "Layers of translucent fruit jelly and Madagascar vanilla cream.", image: "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=400" },
-  { id: 17, name: "Data Donuts", category: "Desserts", price: 11.0, description: "Circuit-board icing with popping candy 'code' bits.", image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400" },
-  { id: 10, name: "Gravity Fries", category: "Meals", price: 7.0, description: "Truffle-dusted potato wedges with a molten dipping core.", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400" },
+  { id: 3, name: "Nebula Ramen", category: "Meals", price: 19.0, description: "Midnight-blue broth with glowing bamboo shoots and soft-boiled egg.", image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400" },
+  { id: 4, name: "Binary Tacos", category: "Meals", price: 14.5, description: "One mild, one wild. Precision-balanced carnitas with neon lime.", image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400" },
+  { id: 5, name: "Pixel Pizza", category: "Meals", price: 17.0, description: "Algorithmically placed pepperonis on a perfect square crust.", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400" },
+  { id: 6, name: "Zen Garden Salad", category: "Meals", price: 12.5, description: "Organic greens with micro-herbs and citrus mist dressing.", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400" },
+  { id: 7, name: "Gravity Fries", category: "Meals", price: 7.0, description: "Truffle-dusted potato wedges with a molten dipping core.", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400" },
+  { id: 8, name: "Quantum Espresso", category: "Drinks", price: 6.5, description: "Double shot of single-origin smart brew beans.", image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400" },
+  { id: 9, name: "Void Cola", category: "Drinks", price: 5.0, description: "Zero-sugar, deep-black sparkling refreshment with hint of vanilla.", image: "https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=400" },
+  { id: 10, name: "Hologram Cake", category: "Desserts", price: 12.0, description: "Layers of translucent fruit jelly and Madagascar vanilla cream.", image: "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=400" },
+  { id: 11, name: "Data Donuts", category: "Desserts", price: 11.0, description: "Circuit-board icing with popping candy 'code' bits.", image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400" },
 ];
 
 // --- Icons ---
@@ -118,13 +122,13 @@ const LandingView = ({ onStart }: { onStart: () => void }) => (
   </div>
 );
 
-const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal }: any) => {
+const MenuView = ({ menuItems, onAddToCart, onCheckout, cartCount, cartTotal }: any) => {
   const [activeCategory, setActiveCategory] = useState('All Items');
   
   const filteredItems = useMemo(() => {
-    if (activeCategory === 'All Items') return MENU_ITEMS;
-    return MENU_ITEMS.filter(item => item.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === 'All Items') return menuItems;
+    return menuItems.filter((item: MenuItem) => item.category === activeCategory);
+  }, [activeCategory, menuItems]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 animate-slide-up pb-48">
@@ -147,7 +151,12 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal }: any) => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-        {filteredItems.map(item => (
+        {filteredItems.length === 0 ? (
+          <div className="col-span-full text-center py-20">
+            <p className="text-zinc-400 text-lg font-medium">No items found in this category.</p>
+          </div>
+        ) : (
+          filteredItems.map(item => (
           <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
             <div className="h-64 overflow-hidden relative">
               <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
@@ -166,7 +175,8 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal }: any) => {
               </button>
             </div>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       {cartCount > 0 && (
@@ -189,7 +199,38 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal }: any) => {
 
 const CheckoutView = ({ cart, updateCart, onComplete, onBack, onAddToCart }: any) => {
   const [paymentMethod, setPaymentMethod] = useState<'visa' | 'apple' | 'cash'>('visa');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const cartTotal = useMemo(() => cart.reduce((acc: number, curr: CartItem) => acc + (curr.item.price * curr.quantity), 0), [cart]);
+
+  const handleOrderComplete = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableNumber: 6,
+          cart: cart,
+          paymentMethod: paymentMethod,
+          total: cartTotal
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+      
+      const order = await response.json();
+      // Store orderId for tracking
+      localStorage.setItem('currentOrderId', order.orderId.toString());
+      onComplete();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-12 animate-slide-up pb-40">
@@ -275,8 +316,11 @@ const CheckoutView = ({ cart, updateCart, onComplete, onBack, onAddToCart }: any
               <div className="flex justify-between text-zinc-500 text-sm font-bold uppercase tracking-widest"><span>Automated Delivery</span><span className="text-emerald-600">Free</span></div>
               <div className="flex justify-between items-center pt-8 border-t border-zinc-100"><span className="text-2xl font-black italic uppercase text-zinc-900">Pay Now</span><span className="text-5xl font-black text-zinc-900 tracking-tighter">${cartTotal.toFixed(2)}</span></div>
             </div>
-            <button onClick={onComplete} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
-              Pay & Confirm
+            <button 
+              onClick={handleOrderComplete} 
+              disabled={isSubmitting}
+              className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              {isSubmitting ? 'Processing...' : 'Pay & Confirm'}
             </button>
           </Card>
         </div>
@@ -290,12 +334,38 @@ const TrackingView = () => {
   const [isPanning, setIsPanning] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
   const [progress, setProgress] = useState(0);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress(prev => (prev < 4 ? prev + 1 : prev));
     }, 4500);
     return () => clearInterval(timer);
+  }, []);
+
+  // Load current order id from localStorage and fetch its status
+  useEffect(() => {
+    const storedId = localStorage.getItem('currentOrderId');
+    if (!storedId) return;
+    setOrderId(storedId);
+
+    const fetchStatus = () => {
+      fetch(`${API_URL}/tracking/${storedId}/status`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.status) {
+            setOrderStatus(data.status);
+          }
+        })
+        .catch(() => {
+          // ignore errors, keep UI simulation
+        });
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -443,16 +513,111 @@ const TrackingView = () => {
                 </div>
              </div>
           </Card>
+
+          {orderId && (
+            <Card className="bg-white border-zinc-100 shadow-xl">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4">ORDER STATUS</h4>
+              <p className="text-sm text-zinc-500 mb-2">Order ID: <span className="font-mono text-zinc-800">{orderId}</span></p>
+              <p className="text-lg font-black uppercase tracking-tight italic">
+                {orderStatus ? `Current status: ${orderStatus}` : 'Tracking latest order...'}
+              </p>
+            </Card>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// --- Admin View ---
+const AdminView = () => {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/orders`)
+      .then(res => res.json())
+      .then(data => {
+        setOrders(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching orders:', err);
+        setIsLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 animate-slide-up pb-32">
+      <h2 className="text-3xl md:text-4xl font-black tracking-tighter mb-8 italic text-zinc-900 uppercase">Recent Orders</h2>
+      {isLoading ? (
+        <p className="text-zinc-400 text-lg">Loading orders...</p>
+      ) : orders.length === 0 ? (
+        <p className="text-zinc-400 text-lg">No orders yet.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-3xl border border-zinc-200 bg-white shadow-sm">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-zinc-200 bg-zinc-50">
+              <tr className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-6 py-3">Order #</th>
+                <th className="px-6 py-3">Table</th>
+                <th className="px-6 py-3">Total</th>
+                <th className="px-6 py-3">Payment</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map(order => (
+                <tr key={order.id} className="border-b border-zinc-100 last:border-0 text-xs text-zinc-700">
+                  <td className="px-6 py-3 font-mono text-[11px]">{order.order_number}</td>
+                  <td className="px-6 py-3">#{order.table_number || 6}</td>
+                  <td className="px-6 py-3 font-semibold">${Number(order.total).toFixed(2)}</td>
+                  <td className="px-6 py-3 uppercase">{order.payment_method}</td>
+                  <td className="px-6 py-3 capitalize">{order.status}</td>
+                  <td className="px-6 py-3 text-zinc-400">{new Date(order.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- Main App ---
 function App() {
-  const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking'>('landing');
+  const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking' | 'admin'>('landing');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+
+  // Fetch menu items from API
+  useEffect(() => {
+    fetch(`${API_URL}/menu`)
+      .then(res => res.json())
+      .then(data => {
+        // Convert price strings to numbers (PostgreSQL returns DECIMAL as strings)
+        const processedData = data.map((item: any) => ({
+          ...item,
+          price: parseFloat(item.price)
+        }));
+        // If API returns no items for some reason, fall back to static items
+        if (!processedData || processedData.length === 0) {
+          setMenuItems(FALLBACK_MENU_ITEMS);
+        } else {
+          setMenuItems(processedData);
+        }
+        setIsLoadingMenu(false);
+      })
+      .catch(err => {
+        console.error('Error fetching menu:', err);
+        setIsLoadingMenu(false);
+        // Fallback to static items if API fails
+        setMenuItems(FALLBACK_MENU_ITEMS);
+      });
+  }, []);
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
@@ -483,16 +648,35 @@ function App() {
             <span className="text-[10px] md:text-[11px] font-black text-[#2D7D90] tracking-[0.4em] uppercase mt-2">Smart Restaurant</span>
           </div>
         </div>
-        {view !== 'landing' && (
-          <button onClick={() => setView(view === 'checkout' ? 'menu' : 'checkout')} className="relative p-4 md:p-5 bg-white border-2 border-zinc-100 rounded-[1.8rem] hover:border-[#2D7D90] transition-all shadow-md active:scale-90 group">
-            <CartIcon />
-            {cartCount > 0 && <span className="absolute -top-3 -right-3 bg-[#2D7D90] text-white text-[10px] font-black w-8 h-8 flex items-center justify-center rounded-full border-4 border-white shadow-2xl animate-bounce group-hover:scale-110 transition-transform">{cartCount}</span>}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setView(view === 'admin' ? 'menu' : 'admin')}
+            className="hidden md:inline-flex px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] rounded-full border border-zinc-200 text-zinc-400 hover:text-zinc-900 hover:border-zinc-400 transition-all"
+          >
+            {view === 'admin' ? 'Close Admin' : 'Admin'}
           </button>
-        )}
+          {view !== 'landing' && view !== 'admin' && (
+            <button onClick={() => setView(view === 'checkout' ? 'menu' : 'checkout')} className="relative p-4 md:p-5 bg-white border-2 border-zinc-100 rounded-[1.8rem] hover:border-[#2D7D90] transition-all shadow-md active:scale-90 group">
+              <CartIcon />
+              {cartCount > 0 && <span className="absolute -top-3 -right-3 bg-[#2D7D90] text-white text-[10px] font-black w-8 h-8 flex items-center justify-center rounded-full border-4 border-white shadow-2xl animate-bounce group-hover:scale-110 transition-transform">{cartCount}</span>}
+            </button>
+          )}
+        </div>
       </header>
       <main className="pt-32 md:pt-48 flex-grow">
         {view === 'landing' && <LandingView onStart={() => setView('menu')} />}
-        {view === 'menu' && <MenuView onAddToCart={addToCart} onCheckout={() => setView('checkout')} cartCount={cartCount} cartTotal={cartTotal} />}
+        {view === 'admin' && <AdminView />}
+        {view === 'menu' && (
+          isLoadingMenu ? (
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <div className="text-zinc-400 text-lg font-medium mb-4">Loading menu...</div>
+              </div>
+            </div>
+          ) : (
+            <MenuView menuItems={menuItems} onAddToCart={addToCart} onCheckout={() => setView('checkout')} cartCount={cartCount} cartTotal={cartTotal} />
+          )
+        )}
         {view === 'checkout' && <CheckoutView cart={cart} updateCart={updateCart} onComplete={() => setView('tracking')} onBack={() => setView('menu')} onAddToCart={addToCart} />}
         {view === 'tracking' && <TrackingView />}
       </main>
