@@ -389,7 +389,8 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
   // Unified pan handlers (mouse, pointer, touch)
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const MAP_W = 1400, MAP_H = 1200;
+  // Use a square logical map so it scales nicely on mobile (keeps content visible)
+  const MAP_W = 1200, MAP_H = 1200;
 
   useEffect(() => {
     const compute = () => {
@@ -511,8 +512,8 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     return { msg: "yay!! food arrived have a good meal! 😋", color: "text-emerald-500" };
   }, [progress]);
 
-  const table6Top = 0.82 * 1200;
-  const table6Left = 0.60 * 1400;
+  const table6Top = 0.82 * MAP_H;
+  const table6Left = 0.60 * MAP_W;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 animate-fade-in pb-20">
@@ -533,13 +534,14 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <Card ref={mapContainerRef} className="h-[650px] md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50 touch-none cursor-default">
+          <Card ref={mapContainerRef} className="w-full aspect-square md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50" style={{ touchAction: 'pan-y' }}>
+
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
-                <div className="w-[1400px] h-[1200px] border-[6px] border-zinc-100 rounded-[5rem] relative bg-white shadow-2xl overflow-hidden">
+             <div className="absolute inset-0 p-4 md:p-6 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+                <div className="border-[6px] border-zinc-100 rounded-[3rem] relative bg-white shadow-2xl overflow-hidden" style={{ width: MAP_W + 'px', height: MAP_H + 'px' }}>
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
                    <div className="absolute top-0 left-0 w-[400px] h-[350px] bg-zinc-50 border-r-4 border-b-4 border-zinc-100 p-10 flex flex-col">
