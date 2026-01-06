@@ -316,6 +316,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const [isPanning, setIsPanning] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
 
+  // Zoom state
+  const [zoom, setZoom] = useState(1);
+  const pinchRef = useRef<{ distance: number; startZoom: number } | null>(null);
+
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
     let timer: any;
@@ -343,18 +347,109 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     return () => clearInterval(timer);
   }, [orderId, setProgress]);
 
+  // Zoom helpers
+  const clampZoom = (z: number) => Math.min(2.5, Math.max(0.5, z));
+  const zoomBy = (factor: number) => setZoom(z => clampZoom(Number((z * factor).toFixed(3))));
+
+  // Pointer/wheel handlers for zoom
+  const handleWheelOnMap = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaY) < 1) return;
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.95 : 1.05;
+    zoomBy(factor);
+  };
+
+  const handleTouchStartPinch = (e: React.TouchEvent) => {
+    if (!e.touches || e.touches.length !== 2) return;
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    pinchRef.current = { distance: dist, startZoom: zoom };
+  };
+
+  const handleTouchMovePinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current || !e.touches || e.touches.length !== 2) return;
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const ratio = dist / pinchRef.current.distance;
+    const newZoom = clampZoom(pinchRef.current.startZoom * ratio);
+    setZoom(newZoom);
+  };
+
+  const handleTouchEndPinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current) return;
+    pinchRef.current = null;
+  };
+
+
   // Unified pan handlers (mouse, pointer, touch)
+  // Use startFinger and startOffset to make panning consistent with zoom
+  const startState = useRef<{ fingerX: number; fingerY: number; startOffsetX: number; startOffsetY: number } | null>(null);
+  const velocity = useRef({ x: 0, y: 0 });
+  const lastMoveTime = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  const applyMomentum = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const step = () => {
+      // apply friction
+      velocity.current.x *= 0.95;
+      velocity.current.y *= 0.95;
+
+      // stop when velocity is tiny
+      if (Math.abs(velocity.current.x) < 0.02 && Math.abs(velocity.current.y) < 0.02) {
+        rafRef.current = null;
+        return;
+      }
+
+      setOffset(prev => ({ x: prev.x + velocity.current.x, y: prev.y + velocity.current.y }));
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
   const handleStart = (x: number, y: number) => {
+    // Stop momentum when starting a new pan
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setIsPanning(true);
-    startPos.current = { x: x - offset.x, y: y - offset.y };
+    startState.current = { fingerX: x, fingerY: y, startOffsetX: offset.x, startOffsetY: offset.y };
+    lastMoveTime.current = performance.now();
+    velocity.current = { x: 0, y: 0 };
   };
 
   const handleMoveTo = (x: number, y: number) => {
-    if (!isPanning) return;
-    setOffset({ x: x - startPos.current.x, y: y - startPos.current.y });
+    if (!isPanning || !startState.current) return;
+    const now = performance.now();
+    const dt = lastMoveTime.current ? (now - lastMoveTime.current) : 16;
+    lastMoveTime.current = now;
+
+    const dx = (x - startState.current.fingerX) / zoom;
+    const dy = (y - startState.current.fingerY) / zoom;
+
+    // compute velocity (px per frame approximation)
+    velocity.current.x = (dx + startState.current.startOffsetX - offset.x) / (dt / 16.6667);
+    velocity.current.y = (dy + startState.current.startOffsetY - offset.y) / (dt / 16.6667);
+
+    setOffset({ x: startState.current.startOffsetX + dx, y: startState.current.startOffsetY + dy });
   };
 
-  const handleEnd = () => setIsPanning(false);
+  const handleEnd = () => {
+    setIsPanning(false);
+    startState.current = null;
+    lastMoveTime.current = null;
+    // trigger momentum if velocity is significant
+    if (Math.abs(velocity.current.x) > 0.5 || Math.abs(velocity.current.y) > 0.5) {
+      applyMomentum();
+    }
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY);
   const handleMouseMove = (e: React.MouseEvent) => handleMoveTo(e.clientX, e.clientY);
@@ -414,8 +509,13 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
+             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }} onWheel={handleWheelOnMap} onTouchStart={(e) => { handleTouchStart(e); handleTouchStartPinch(e); }} onTouchMove={(e) => { handleTouchMove(e); handleTouchMovePinch(e); }} onTouchEnd={(e) => { handleTouchEnd(e); handleTouchEndPinch(e); }}>
                 <div className="w-[1400px] h-[1200px] border-[6px] border-zinc-100 rounded-[5rem] relative bg-white shadow-2xl overflow-hidden">
+                   <div className="absolute top-8 right-8 z-[200] flex flex-col gap-3 pointer-events-auto">
+                      <button onClick={() => zoomBy(1.15)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-black">+</button>
+                      <button onClick={() => zoomBy(0.87)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-black">−</button>
+                      <button onClick={() => setZoom(1)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-xs">reset</button>
+                   </div>
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
                    <div className="absolute top-0 left-0 w-[400px] h-[350px] bg-zinc-50 border-r-4 border-b-4 border-zinc-100 p-10 flex flex-col">
