@@ -1,0 +1,17 @@
+# Example Render manifest for deploying the backend
+# Note: Adjust values in the Render dashboard as needed. This is a sample manifest only.
+services:
+  - type: web
+    name: cyberwait-backend
+    env: node
+    region: oregon
+    plan: starter
+    repo: https://github.com/ahmedgewilli/CYBERWAIT
+    branch: main
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm run start
+    # To run migrations automatically on deploy, set a releaseCommand in the Render UI to:
+    # cd backend && npm run migrate
+    envVars:
+      - key: DATABASE_URL
+        sync: true

@@ -17,6 +17,20 @@ Connecting frontend to a hosted backend & database (Vercel)
 - Optionally, if you use Supabase directly from the frontend, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel as well.
 - After setting env vars, redeploy (or trigger a new deployment) — the frontend will use `VITE_API_URL` to fetch menu items and to POST orders.
 
+Deploying the backend & running migrations (Render example)
+
+1. Create a new Web Service on Render and connect your GitHub repo (`ahmedgewilli/CYBERWAIT`).
+2. Use the **build command**: `cd backend && npm ci` and **start command**: `cd backend && npm start` (or use the provided `Dockerfile`).
+3. Add a managed Postgres or set `DATABASE_URL` (Postgres connection string) in the Render service's Environment section.
+4. Run the migration manually once (Render has a "Shell/Console" you can use) with:
+
+   cd backend && npm run migrate
+
+   The migration runner will look for `supabase/00-init.sql` (preferred) or `backend/database.sql` and execute it.
+5. Optionally set a Release Command in Render to run `cd backend && npm run migrate` on each deploy.
+
+Security note: If you use Supabase service_role or DB credentials temporarily, revoke or rotate them after any automation is complete.
+
 Notes:
 - The frontend falls back to Supabase (if configured) or to the built-in static menu when no backend is provided.
 - If you want me to deploy the backend + database and set the env vars, tell me which provider you prefer (Render, Railway, or I can prepare a Dockerfile and instructions).
