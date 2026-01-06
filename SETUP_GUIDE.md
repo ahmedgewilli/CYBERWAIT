@@ -190,3 +190,46 @@ CYBERWAIT/
 
 Your CyberWait application is now connected to a PostgreSQL database. Orders will be saved and you can track them through the API!
 
+---
+
+## Optional: Supabase (client-side)
+
+If you'd rather use Supabase's hosted Postgres and client library from the frontend, follow these steps:
+
+1. Install the Supabase client in the frontend:
+
+```bash
+npm install @supabase/supabase-js
+```
+
+2. Create `src/supabase.js` and add:
+
+```js
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+)
+```
+
+3. Add the following env vars to your local `.env.local` (do NOT commit this file):
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
+```
+
+4. In Vercel (production), add the same env vars under Project Settings → Environment Variables and redeploy.
+
+5. How to use in the frontend:
+
+```js
+import { supabase } from './supabase'
+
+// example: read menu items
+const { data, error } = await supabase.from('menu').select('*')
+```
+
+Note: Keep your anon key secret in private repos and add server-only keys to backend env vars when needed.
+
