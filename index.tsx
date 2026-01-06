@@ -300,7 +300,7 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
               <div className="flex justify-between items-center pt-8 border-t border-zinc-100"><span className="text-2xl font-black italic uppercase text-zinc-900">Pay Now</span><span className="text-5xl font-black text-zinc-900 tracking-tighter">${cartTotal.toFixed(2)}</span></div>
             </div>
             {!isOrderActive && (
-              <button onClick={onComplete} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
+                <button onClick={() => onComplete(paymentMethod)} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
                 Pay & Confirm
               </button>
             )}
@@ -311,17 +311,37 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
   );
 };
 
-const TrackingView = ({ progress, setProgress, onNewOrder }: any) => {
+const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev: number) => (prev < 4 ? prev + 1 : prev));
-    }, 4500);
+    const API_URL = import.meta.env.VITE_API_URL;
+    let timer: any;
+    if (orderId && API_URL) {
+      const poll = async () => {
+        try {
+          const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/tracking/${orderId}/status`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const status = data.status || data?.status?.toLowerCase();
+          const map: Record<string, number> = { pending: 0, preparing: 1, 'tray loaded': 2, loaded: 2, out: 3, 'out for delivery': 3, served: 4, completed: 4 };
+          const newProgress = (typeof status === 'string' && status in map) ? map[status] : progress;
+          setProgress(newProgress);
+        } catch (err) {
+          console.error('Tracking poll error:', err);
+        }
+      };
+      poll();
+      timer = setInterval(poll, 4500);
+    } else {
+      timer = setInterval(() => {
+        setProgress((prev: number) => (prev < 4 ? prev + 1 : prev));
+      }, 4500);
+    }
     return () => clearInterval(timer);
-  }, [setProgress]);
+  }, [orderId, setProgress]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsPanning(true);
@@ -475,13 +495,25 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOrderActive, setIsOrderActive] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
   // Menu items loaded from Supabase (falls back to static MENU_ITEMS)
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
 
   useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
     const loadMenu = async () => {
       try {
+        if (API_URL) {
+          const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
+          if (!res.ok) {
+            throw new Error(`Menu API error: ${res.status}`);
+          }
+          const data = await res.json();
+          setMenuItems(data as MenuItem[]);
+          return;
+        }
+
         const { data, error } = await supabase.from('menu').select('*').order('id');
         if (error) {
           console.error('Supabase load menu error:', error);
@@ -525,13 +557,31 @@ function App() {
     if (progress === 4) {
       setIsOrderActive(false);
       setCart([]); // Automatically empty the cart when the order is served
+      setCurrentOrderId(null);
     }
   }, [progress]);
 
-  const handlePlaceOrder = () => {
-    setIsOrderActive(true);
-    setProgress(0); 
-    setView('tracking');
+  const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa') => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    try {
+      if (API_URL) {
+        const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tableNumber: 6, cart, paymentMethod, total: cartTotal }),
+        });
+        if (!res.ok) throw new Error(`Order API error: ${res.status}`);
+        const body = await res.json();
+        const orderId = body.orderId || body.id || body.order_id;
+        setCurrentOrderId(orderId ?? null);
+      }
+    } catch (err) {
+      console.error('Place order error:', err);
+    } finally {
+      setIsOrderActive(true);
+      setProgress(0);
+      setView('tracking');
+    }
   };
 
   const handleNewOrderStart = () => {
