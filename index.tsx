@@ -629,22 +629,31 @@ function App() {
       try {
         if (API_URL) {
           const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
-          if (!res.ok) {
-            throw new Error(`Menu API error: ${res.status}`);
+          if (res.ok) {
+            const data = await res.json();
+            setMenuItems(data as MenuItem[]);
+            return;
           }
-          const data = await res.json();
-          setMenuItems(data as MenuItem[]);
-          return;
+
+          // If unauthorized or any failure, try the guaranteed public endpoint
+          console.warn('Primary menu API failed, status:', res.status);
+          const fallback = await fetch(`${API_URL.replace(/\/$/, '')}/api/public-menu`);
+          if (fallback.ok) {
+            const fallbackData = await fallback.json();
+            setMenuItems(fallbackData as MenuItem[]);
+            return;
+          }
+
+          // If both fail, continue to Supabase client fallback below
         }
 
         const { data, error } = await supabase.from('menu').select('*').order('id');
         if (error) {
-          console.error('Supabase load menu error:', error);
-          return;
+          console.warn('Supabase load menu error:', error);
         }
         if (data) setMenuItems(data as MenuItem[]);
       } catch (err) {
-        console.error(err);
+        console.error('loadMenu error:', err);
       }
     };
     loadMenu();
