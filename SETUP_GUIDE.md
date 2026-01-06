@@ -231,5 +231,37 @@ import { supabase } from './supabase'
 const { data, error } = await supabase.from('menu').select('*')
 ```
 
-Note: Keep your anon key secret in private repos and add server-only keys to backend env vars when needed.
+## Supabase: running the DB migration (added files)
+
+I added an idempotent SQL migration file: `supabase/00-init.sql` and a short README at `supabase/README.md`.
+
+Options to run it:
+
+- Supabase SQL Editor (recommended):
+  1. Open your Supabase project → **SQL Editor** → **New query**
+  2. Open `supabase/00-init.sql`, paste the contents, and click **Run**
+
+- CLI / psql (if you have a connection string):
+  1. Get your `DATABASE_URL` (format: `postgresql://<user>:<password>@<host>:5432/<db>`)
+  2. Run: `psql "<DATABASE_URL>" -f supabase/00-init.sql`
+
+What the migration does:
+- Creates `menu`, `profiles`, `orders`, and `order_items` tables
+- Enables RLS on orders/order_items and adds owner policies
+- Seeds the `menu` table (idempotent)
+
+Verification queries you can run after migrating:
+
+```sql
+SELECT COUNT(*) FROM menu;
+SELECT * FROM menu LIMIT 10;
+SELECT COUNT(*) FROM orders;
+SELECT COUNT(*) FROM profiles;
+```
+
+Security notes:
+- You do not need to share the service_role key to run the SQL in the dashboard. If you used any temporary keys, revoke them afterwards (Supabase → Project Settings → API → Service Role Key).
+- Never commit secrets into the repository.
+
+If you'd like me to run the migration for you, provide a temporary `DATABASE_URL` (I will revoke it after use) or I can continue to guide you step-by-step.
 
