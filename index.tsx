@@ -343,17 +343,38 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     return () => clearInterval(timer);
   }, [orderId, setProgress]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Unified pan handlers (mouse, pointer, touch)
+  const handleStart = (x: number, y: number) => {
     setIsPanning(true);
-    startPos.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    startPos.current = { x: x - offset.x, y: y - offset.y };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMoveTo = (x: number, y: number) => {
     if (!isPanning) return;
-    setOffset({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y });
+    setOffset({ x: x - startPos.current.x, y: y - startPos.current.y });
   };
 
-  const handleMouseUp = () => setIsPanning(false);
+  const handleEnd = () => setIsPanning(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY);
+  const handleMouseMove = (e: React.MouseEvent) => handleMoveTo(e.clientX, e.clientY);
+  const handleMouseUp = () => handleEnd();
+
+  const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
+  const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
+  const handlePointerUp = (e: React.PointerEvent) => { (e.target as Element)?.releasePointerCapture?.(e.pointerId); handleEnd(); };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleStart(t.clientX, t.clientY);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleMoveTo(t.clientX, t.clientY);
+  };
+  const handleTouchEnd = () => handleEnd();
 
   const robotMood = useMemo(() => {
     if (progress === 0) return { msg: "Chef is busy, I'm waiting for your food! 👨‍🍳", color: "text-zinc-500" };
@@ -385,8 +406,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <Card className="h-[650px] md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl cursor-grab active:cursor-grabbing bg-zinc-50"
-            onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+          <Card className="h-[650px] md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl cursor-grab active:cursor-grabbing bg-zinc-50 touch-none"
+            onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
+            onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
+            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
