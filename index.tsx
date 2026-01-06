@@ -408,10 +408,12 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       const availW = Math.max(0, cw - padLeft - padRight);
       const availH = Math.max(0, ch - padTop - padBottom);
       const scale = Math.min(availW / MAP_W, availH / MAP_H);
-      setZoom(scale);
-      // Offset within the padded content area so the map is centered visually
-      const offsetX = padLeft + (availW - MAP_W * scale) / 2;
-      const offsetY = padTop + (availH - MAP_H * scale) / 2;
+      // Slightly upscale the map so it appears a bit larger and more readable on phones
+      const adjusted = clampZoom(Math.min(scale * 1.06, 2));
+      setZoom(adjusted);
+      // Offset computed using the adjusted zoom so centering remains accurate
+      const offsetX = padLeft + (availW - MAP_W * adjusted) / 2;
+      const offsetY = padTop + (availH - MAP_H * adjusted) / 2;
       setOffset({ x: Math.round(offsetX), y: Math.round(offsetY) });
     };
     compute();
@@ -517,24 +519,12 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 animate-fade-in pb-20">
-      <div className="flex flex-col items-center text-center mb-16 gap-8">
-        <div>
-          <h2 className="text-5xl md:text-6xl font-black tracking-tighter italic text-zinc-900 uppercase">Live Tracking</h2>
-          <p className="text-zinc-500 font-medium text-lg mt-2">Your humanoid waiter is handling your request with care.</p>
-        </div>
-        {progress === 4 && (
-          <button 
-            onClick={onNewOrder} 
-            className="px-14 py-5 bg-[#2D7D90] text-white rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-95 shadow-xl"
-          >
-            Start New Order
-          </button>
-        )}
-      </div>
+      {/* reduced header: the large panels above the map were removed per UX request */}
+      <div className="mb-4" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <Card ref={mapContainerRef} className="w-full aspect-square md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50" style={{ touchAction: 'pan-y' }}>
+          <Card ref={mapContainerRef} className="w-full aspect-square md:h-[920px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50" style={{ touchAction: 'pan-y' }}>
 
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
@@ -573,9 +563,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
                    </div>
                 </div>
              </div>
-             <div className="absolute top-10 left-10 flex flex-col gap-6 pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-3xl px-6 py-3 rounded-2xl border border-zinc-100 text-[11px] font-black text-[#2D7D90] uppercase tracking-[0.3em] flex items-center gap-4 shadow-xl">
-                  <div className="w-3 h-3 rounded-full bg-[#2D7D90] animate-pulse ring-4 ring-[#2D7D90]/20"></div> SCANNING ACTIVE
+             <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none z-30">
+                <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-md border border-zinc-100 text-[10px] font-black text-[#2D7D90] uppercase tracking-[0.24em] flex items-center gap-3 shadow-sm">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#2D7D90] animate-pulse ring-2 ring-[#2D7D90]/20"></div>
+                  <span>SCANNING ACTIVE</span>
                 </div>
              </div>
              <div className="absolute bottom-10 left-10 right-10 flex justify-center pointer-events-none">
