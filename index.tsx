@@ -388,6 +388,29 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
 
   // Unified pan handlers (mouse, pointer, touch)
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const MAP_W = 1400, MAP_H = 1200;
+
+  useEffect(() => {
+    const compute = () => {
+      const el = mapContainerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cw = rect.width;
+      const ch = rect.height;
+      const scale = Math.min(cw / MAP_W, ch / MAP_H);
+      setZoom(scale);
+      const offsetX = (cw - MAP_W * scale) / 2;
+      const offsetY = (ch - MAP_H * scale) / 2;
+      setOffset({ x: offsetX, y: offsetY });
+    };
+    compute();
+    const ro = new (window as any).ResizeObserver(compute);
+    if (mapContainerRef.current) ro.observe(mapContainerRef.current);
+    window.addEventListener('resize', compute);
+    return () => { window.removeEventListener('resize', compute); ro.disconnect(); };
+  }, []);
+
   // Use startFinger and startOffset to make panning consistent with zoom
   const startState = useRef<{ fingerX: number; fingerY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const velocity = useRef({ x: 0, y: 0 });
@@ -501,21 +524,13 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <Card className="h-[650px] md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl cursor-grab active:cursor-grabbing bg-zinc-50 touch-none"
-            onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
-            onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
-            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <Card ref={mapContainerRef} className="h-[650px] md:h-[850px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50 touch-none cursor-default">
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }} onWheel={handleWheelOnMap} onTouchStart={(e) => { handleTouchStart(e); handleTouchStartPinch(e); }} onTouchMove={(e) => { handleTouchMove(e); handleTouchMovePinch(e); }} onTouchEnd={(e) => { handleTouchEnd(e); handleTouchEndPinch(e); }}>
+             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}>
                 <div className="w-[1400px] h-[1200px] border-[6px] border-zinc-100 rounded-[5rem] relative bg-white shadow-2xl overflow-hidden">
-                   <div className="absolute top-8 right-8 z-[200] flex flex-col gap-3 pointer-events-auto">
-                      <button onClick={() => zoomBy(1.15)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-black">+</button>
-                      <button onClick={() => zoomBy(0.87)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center font-black">−</button>
-                      <button onClick={() => setZoom(1)} className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-xs">reset</button>
-                   </div>
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
                    <div className="absolute top-0 left-0 w-[400px] h-[350px] bg-zinc-50 border-r-4 border-b-4 border-zinc-100 p-10 flex flex-col">
