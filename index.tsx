@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
-import { supabase } from './supabase';
+import { supabase } from './src/supabase';
 
 // --- Types & Data ---
 interface MenuItem {
