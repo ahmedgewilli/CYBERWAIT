@@ -398,11 +398,20 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       const rect = el.getBoundingClientRect();
       const cw = rect.width;
       const ch = rect.height;
-      const scale = Math.min(cw / MAP_W, ch / MAP_H);
+      // Account for container padding to get the actual available area
+      const style = getComputedStyle(el);
+      const padLeft = parseFloat(style.paddingLeft) || 0;
+      const padRight = parseFloat(style.paddingRight) || 0;
+      const padTop = parseFloat(style.paddingTop) || 0;
+      const padBottom = parseFloat(style.paddingBottom) || 0;
+      const availW = Math.max(0, cw - padLeft - padRight);
+      const availH = Math.max(0, ch - padTop - padBottom);
+      const scale = Math.min(availW / MAP_W, availH / MAP_H);
       setZoom(scale);
-      const offsetX = (cw - MAP_W * scale) / 2;
-      const offsetY = (ch - MAP_H * scale) / 2;
-      setOffset({ x: offsetX, y: offsetY });
+      // Offset within the padded content area so the map is centered visually
+      const offsetX = padLeft + (availW - MAP_W * scale) / 2;
+      const offsetY = padTop + (availH - MAP_H * scale) / 2;
+      setOffset({ x: Math.round(offsetX), y: Math.round(offsetY) });
     };
     compute();
     const ro = new (window as any).ResizeObserver(compute);
@@ -529,7 +538,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}>
+             <div className="absolute inset-0 p-6 md:p-12 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
                 <div className="w-[1400px] h-[1200px] border-[6px] border-zinc-100 rounded-[5rem] relative bg-white shadow-2xl overflow-hidden">
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
