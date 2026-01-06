@@ -14,8 +14,12 @@ How to use:
 Connecting frontend to a hosted backend & database (Vercel)
 
 - Set `VITE_API_URL` in your Vercel project environment variables to the full URL of your deployed backend (for example: `https://my-backend.onrender.com`).
-- Optionally, if you use Supabase directly from the frontend, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel as well.
-- After setting env vars, redeploy (or trigger a new deployment) — the frontend will use `VITE_API_URL` to fetch menu items and to POST orders.
+- This repository now includes serverless API endpoints (Vercel-friendly) at `/api/*` that can be used as the backend. If you deploy the same repo to Vercel for the backend as well, set `VITE_API_URL` to your Vercel app's URL and the frontend will call `/api/menu`, `/api/orders`, and `/api/tracking/:id/status`.
+- For persistence using Supabase, set the following Vercel environment variables:
+  - `VITE_SUPABASE_URL` (public)
+  - `VITE_SUPABASE_ANON_KEY` (public)
+  - `SUPABASE_SERVICE_ROLE` (server-only, required to write orders)
+- After setting env vars, redeploy (or trigger a new deployment) — the serverless endpoints will use Supabase when configured, otherwise will fall back to the built-in static menu and simulated orders.
 
 Deploying the backend & running migrations (Render example)
 
