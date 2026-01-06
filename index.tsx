@@ -408,12 +408,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       const availW = Math.max(0, cw - padLeft - padRight);
       const availH = Math.max(0, ch - padTop - padBottom);
       const scale = Math.min(availW / MAP_W, availH / MAP_H);
-      // Slightly upscale the map so it appears a bit larger and more readable on phones
-      const adjusted = clampZoom(Math.min(scale * 1.06, 2));
-      setZoom(adjusted);
-      // Offset computed using the adjusted zoom so centering remains accurate
-      const offsetX = padLeft + (availW - MAP_W * adjusted) / 2;
-      const offsetY = padTop + (availH - MAP_H * adjusted) / 2;
+      setZoom(scale);
+      // Offset within the padded content area so the map is centered visually
+      const offsetX = padLeft + (availW - MAP_W * scale) / 2;
+      const offsetY = padTop + (availH - MAP_H * scale) / 2;
       setOffset({ x: Math.round(offsetX), y: Math.round(offsetY) });
     };
     compute();
@@ -485,10 +483,38 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       applyMomentum();
     }
   };
+  // Unified pan handlers (mouse, pointer, touch)
+  const handleStart = (x: number, y: number) => {
+    setIsPanning(true);
+    startPos.current = { x: x - offset.x, y: y - offset.y };
+  };
+
+  const handleMoveTo = (x: number, y: number) => {
+    if (!isPanning) return;
+    setOffset({ x: x - startPos.current.x, y: y - startPos.current.y });
+  };
+
+  const handleEnd = () => setIsPanning(false);
 
   const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY);
   const handleMouseMove = (e: React.MouseEvent) => handleMoveTo(e.clientX, e.clientY);
   const handleMouseUp = () => handleEnd();
+
+  const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
+  const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
+  const handlePointerUp = (e: React.PointerEvent) => { (e.target as Element)?.releasePointerCapture?.(e.pointerId); handleEnd(); };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleStart(t.clientX, t.clientY);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleMoveTo(t.clientX, t.clientY);
+  };
+  const handleTouchEnd = () => handleEnd();
 
   const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
   const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
