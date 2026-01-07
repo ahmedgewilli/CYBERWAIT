@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
+import { supabase } from './src/supabase';
 
 // --- Types & Data ---
 interface MenuItem {
@@ -89,15 +90,14 @@ const PlusIcon = ({ className }: { className?: string }) => (
 );
 
 // --- UI Sub-Components ---
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, className = "", ...props }, ref) => (
+const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div 
-    ref={ref}
     className={`bg-white border border-zinc-200 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl transition-all duration-300 ${className}`}
     {...props}
   >
     {children}
   </div>
-));
+);
 
 // --- Page Views ---
 const LandingView = ({ onStart }: { onStart: () => void }) => (
@@ -351,13 +351,52 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const clampZoom = (z: number) => Math.min(2.5, Math.max(0.5, z));
   const zoomBy = (factor: number) => setZoom(z => clampZoom(Number((z * factor).toFixed(3))));
 
+  // Pointer/wheel handlers for zoom
+  const handleWheelOnMap = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaY) < 1) return;
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.95 : 1.05;
+    zoomBy(factor);
+  };
+
+  const handleTouchStartPinch = (e: React.TouchEvent) => {
+    if (!e.touches || e.touches.length !== 2) return;
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    pinchRef.current = { distance: dist, startZoom: zoom };
+  };
+
+  const handleTouchMovePinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current || !e.touches || e.touches.length !== 2) return;
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const ratio = dist / pinchRef.current.distance;
+    const newZoom = clampZoom(pinchRef.current.startZoom * ratio);
+    setZoom(newZoom);
+  };
+
+  const handleTouchEndPinch = (e: React.TouchEvent) => {
+    if (!pinchRef.current) return;
+    pinchRef.current = null;
+  };
+
+
   // Unified pan handlers (mouse, pointer, touch)
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  
-  // FIXED: Adjusted MAP dimensions for tighter mobile scale
+  // Use a square logical map so it scales nicely on mobile (keeps content visible)
   const isMobile = window.innerWidth < 768;
-  const MAP_W = isMobile ? 750 : 1050; 
-  const MAP_H = isMobile ? 650 : 900; 
+
+  const MAP_W = isMobile ? 820 : 1050;
+  const MAP_H = isMobile ? 720 : 900;
+  const BASE_SCALE = isMobile ? 1.05 : 1;
+
+
 
   useEffect(() => {
     const compute = () => {
@@ -366,6 +405,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       const rect = el.getBoundingClientRect();
       const cw = rect.width;
       const ch = rect.height;
+      // Account for container padding to get the actual available area
       const style = getComputedStyle(el);
       const padLeft = parseFloat(style.paddingLeft) || 0;
       const padRight = parseFloat(style.paddingRight) || 0;
@@ -375,6 +415,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       const availH = Math.max(0, ch - padTop - padBottom);
       const scale = Math.min(availW / MAP_W, availH / MAP_H);
       setZoom(scale);
+      // Offset within the padded content area so the map is centered visually
       const offsetX = padLeft + (availW - MAP_W * scale) / 2;
       const offsetY = padTop + (availH - MAP_H * scale) / 2;
       setOffset({ x: Math.round(offsetX), y: Math.round(offsetY) });
@@ -384,8 +425,9 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     if (mapContainerRef.current) ro.observe(mapContainerRef.current);
     window.addEventListener('resize', compute);
     return () => { window.removeEventListener('resize', compute); ro.disconnect(); };
-  }, [MAP_W, MAP_H]);
+  }, []);
 
+  // Use startFinger and startOffset to make panning consistent with zoom
   const startState = useRef<{ fingerX: number; fingerY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const velocity = useRef({ x: 0, y: 0 });
   const lastMoveTime = useRef<number | null>(null);
@@ -394,12 +436,16 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const applyMomentum = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     const step = () => {
+      // apply friction
       velocity.current.x *= 0.95;
       velocity.current.y *= 0.95;
+
+      // stop when velocity is tiny
       if (Math.abs(velocity.current.x) < 0.02 && Math.abs(velocity.current.y) < 0.02) {
         rafRef.current = null;
         return;
       }
+
       setOffset(prev => ({ x: prev.x + velocity.current.x, y: prev.y + velocity.current.y }));
       rafRef.current = requestAnimationFrame(step);
     };
@@ -407,6 +453,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   };
 
   const handleStart = (x: number, y: number) => {
+    // Stop momentum when starting a new pan
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -422,10 +469,14 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     const now = performance.now();
     const dt = lastMoveTime.current ? (now - lastMoveTime.current) : 16;
     lastMoveTime.current = now;
+
     const dx = (x - startState.current.fingerX) / zoom;
     const dy = (y - startState.current.fingerY) / zoom;
+
+    // compute velocity (px per frame approximation)
     velocity.current.x = (dx + startState.current.startOffsetX - offset.x) / (dt / 16.6667);
     velocity.current.y = (dy + startState.current.startOffsetY - offset.y) / (dt / 16.6667);
+
     setOffset({ x: startState.current.startOffsetX + dx, y: startState.current.startOffsetY + dy });
   };
 
@@ -433,10 +484,31 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     setIsPanning(false);
     startState.current = null;
     lastMoveTime.current = null;
+    // trigger momentum if velocity is significant
     if (Math.abs(velocity.current.x) > 0.5 || Math.abs(velocity.current.y) > 0.5) {
       applyMomentum();
     }
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY);
+  const handleMouseMove = (e: React.MouseEvent) => handleMoveTo(e.clientX, e.clientY);
+  const handleMouseUp = () => handleEnd();
+
+  const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
+  const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
+  const handlePointerUp = (e: React.PointerEvent) => { (e.target as Element)?.releasePointerCapture?.(e.pointerId); handleEnd(); };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleStart(t.clientX, t.clientY);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    handleMoveTo(t.clientX, t.clientY);
+  };
+  const handleTouchEnd = () => handleEnd();
 
   const robotMood = useMemo(() => {
     if (progress === 0) return { msg: "Chef is busy, I'm waiting for your food! 👨‍🍳", color: "text-zinc-500" };
@@ -445,6 +517,9 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     if (progress === 3) return { msg: "I'm on my way to your table! 🤖💨", color: "text-[#2D7D90]" };
     return { msg: "yay!! food arrived have a good meal! 😋", color: "text-emerald-500" };
   }, [progress]);
+
+  const table6Top = 0.82 * MAP_H;
+  const table6Left = 0.60 * MAP_W;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 animate-fade-in pb-20">
@@ -465,46 +540,105 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          {/* FIXED: Increased mobile height to 75vh */}
           <Card
             ref={mapContainerRef}
-            className="w-full h-[75vh] sm:h-[65vh] md:h-[800px] relative p-0 overflow-hidden border-zinc-200"
+            className="
+              w-full
+              h-[62vh]
+              sm:h-[65vh]
+              md:h-[800px]
+              relative
+              p-0
+              overflow-hidden
+              border-zinc-200
+              shadow-3xl
+              bg-zinc-50
+            "
           >
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 bg-white/90 backdrop-blur-xl px-10 py-4 rounded-full shadow-2xl border border-white/50 ring-4 ring-zinc-900/5 whitespace-nowrap scale-90 sm:scale-100">
-               <div className="w-4 h-4 rounded-full bg-cyan-500 animate-ping"></div>
-               <span className="font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs text-cyan-900 italic">Scanning Active</span>
-            </div>
 
-            <div 
-              style={{
-                transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-                transformOrigin: '0 0',
-              }}
-              className="relative w-full h-full bg-zinc-50/50"
-              onMouseDown={handleStart as any}
-              onMouseMove={handleMoveTo as any}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
-              onTouchStart={handleStart as any}
-              onTouchMove={handleMoveTo as any}
-              onTouchEnd={handleEnd}
-            >
-              <svg 
-                width={MAP_W} 
-                height={MAP_H} 
-                viewBox={`0 0 ${MAP_W} ${MAP_H}`} 
-                className="absolute inset-0 select-none pointer-events-none"
-              >
-                {/* Simplified Map Content */}
-                <rect x="50" y="50" width="300" height="350" rx="30" fill="white" stroke="#f4f4f5" strokeWidth="2" />
-                <text x="75" y="90" className="font-black text-[10px] uppercase tracking-widest fill-zinc-300">Kitchen</text>
-                
-                {/* Tables Example */}
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                   <circle key={i} cx={MAP_W * 0.5 + (i%2 ? 100 : -100)} cy={200 + i*100} r="40" fill="white" stroke="#f4f4f5" strokeWidth="2" />
-                ))}
-              </svg>
+
+             <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
+               <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+             </div>
+             <div className="absolute inset-0 p-1 sm:p-2 md:p-4 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+                <div className="border-[6px] border-zinc-100 rounded-[3rem] relative bg-white shadow-2xl overflow-hidden" style={{ width: MAP_W + 'px', height: MAP_H + 'px' }}>
+                   <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
+                   <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
+                   <div className="absolute top-0 left-0 w-[400px] h-[350px] bg-zinc-50 border-r-4 border-b-4 border-zinc-100 p-10 flex flex-col">
+                      <span className="text-[14px] font-black uppercase tracking-[0.5em] text-zinc-900 mb-10 border-b-2 border-zinc-100 pb-2">KITCHEN</span>
+                      <div className="grid grid-cols-3 gap-6">
+                        {[1,2,3,4,5,6].map(i => <div key={i} className="h-12 bg-white border-2 border-zinc-100 rounded-xl flex items-center justify-center text-[8px] font-black text-zinc-200">BAY_{i}</div>)}
+                      </div>
+                   </div>
+                   {[1, 2, 3, 4, 5, 6].map((tbl) => {
+                     const isTarget = tbl === 6;
+                     return (
+                      <div key={tbl} className={`absolute w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center font-black text-xs transition-all ${isTarget ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-110 z-10' : 'border-zinc-100 bg-zinc-50/20 text-zinc-200'}`} style={{ 
+                        top: `${Math.floor((tbl-1)/2) * 22 + 38}%`, left: `${((tbl-1)%2) * 22 + 38}%` 
+                      }}>
+                        <span className="text-[11px] opacity-40 mb-1 tracking-tighter uppercase">TABLE</span>
+                        <span className="text-lg">#{tbl}</span>
+                        {isTarget && <div className="absolute -top-16 animate-bounce text-[#2D7D90] text-4xl">📍</div>}
+                      </div>
+                    )})}
+                   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+                     <path d={`M 200,175 Q 300,700 ${table6Left + 56},${table6Top + 56}`} stroke="#2D7D90" strokeWidth="12" strokeDasharray="20 20" fill="none" strokeLinecap="round" />
+                   </svg>
+                   <div className="absolute w-20 h-20 md:w-32 md:h-32 bg-[#2D7D90] text-white rounded-[3rem] md:rounded-[4.5rem] shadow-2xl flex items-center justify-center animate-bounce transition-all duration-1000 z-[100] border-[6px] border-white" 
+                    style={{ 
+                        top: progress < 3 ? '175px' : progress === 3 ? '550px' : `${table6Top - 8}px`, 
+                        left: progress < 3 ? '200px' : progress === 3 ? '450px' : `${table6Left - 8}px` 
+                    }}>
+                     <CyberWaitLogo className="w-12 h-12 md:w-20 md:h-20 text-white" />
+                   </div>
+                </div>
+             </div>
+             <div className="absolute top-10 left-10 flex flex-col gap-6 pointer-events-none">
+                <div className="bg-white/95 backdrop-blur-3xl px-6 py-3 rounded-2xl border border-zinc-100 text-[11px] font-black text-[#2D7D90] uppercase tracking-[0.3em] flex items-center gap-4 shadow-xl">
+                  <div className="w-3 h-3 rounded-full bg-[#2D7D90] animate-pulse ring-4 ring-[#2D7D90]/20"></div> SCANNING ACTIVE
+                </div>
+             </div>
+          </Card>
+        </div>
+        
+        <div className="space-y-8">
+          <Card className="bg-white border-zinc-100 shadow-xl">
+            <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
+            <div className="space-y-12 relative ml-3">
+              <div className="absolute left-[15px] top-2 bottom-2 w-1 bg-zinc-50"></div>
+              {[
+                { label: 'Order Received', step: 0 },
+                { label: 'Chef Preparing', step: 1 },
+                { label: 'Tray Loaded', step: 2 },
+                { label: 'Out For Delivery', step: 3 },
+                { label: 'Served', step: 4 }
+              ].map((item, idx) => {
+                const s = progress > idx ? 'done' : progress === idx ? 'active' : 'pending';
+                return (
+                <div key={idx} className="flex gap-8 items-center relative z-10">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-black border-[3px] transition-all duration-700 ${s === 'done' ? 'bg-[#10b981] border-[#10b981] text-white shadow-lg' : s === 'active' ? 'bg-[#2D7D90] border-[#2D7D90] text-white shadow-xl scale-110' : 'bg-white border-zinc-100 text-zinc-300'}`}>{s === 'done' ? '✓' : idx + 1}</div>
+                  <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${s === 'pending' ? 'text-zinc-300' : 'text-zinc-900'}`}>{item.label}</h4>
+                </div>
+              )})}
             </div>
+          </Card>
+          
+          <Card className="bg-white border-zinc-100 shadow-xl">
+             <div className="flex justify-between items-center mb-10">
+               <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
+               <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
+             </div>
+             <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
+                <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
+                <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
+             </div>
+             <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
+                <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">POWER BANK</div>
+                <div className="flex gap-2">
+                   {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
+                </div>
+             </div>
           </Card>
         </div>
       </div>
@@ -512,62 +646,176 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   );
 };
 
-export default function App() {
+// --- Main App ---
+function App() {
   const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking'>('landing');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isOrderActive, setIsOrderActive] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
-  const cartCount = cart.reduce((acc, curr) => acc + curr.quantity, 0);
-  const cartTotal = cart.reduce((acc, curr) => acc + curr.item.price * curr.quantity, 0);
+  // Menu items loaded from Supabase (falls back to static MENU_ITEMS)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
 
-  const onAddToCart = (item: MenuItem) => {
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const loadMenu = async () => {
+      try {
+        if (API_URL) {
+          const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
+          if (res.ok) {
+            const data = await res.json();
+            setMenuItems(data as MenuItem[]);
+            return;
+          }
+
+          // If unauthorized or any failure, try the guaranteed public endpoint
+          console.warn('Primary menu API failed, status:', res.status);
+          const fallback = await fetch(`${API_URL.replace(/\/$/, '')}/api/public-menu`);
+          if (fallback.ok) {
+            const fallbackData = await fallback.json();
+            setMenuItems(fallbackData as MenuItem[]);
+            return;
+          }
+
+          // If both fail, continue to Supabase client fallback below
+        }
+
+        const { data, error } = await supabase.from('menu').select('*').order('id');
+        if (error) {
+          console.warn('Supabase load menu error:', error);
+        }
+        if (data) setMenuItems(data as MenuItem[]);
+      } catch (err) {
+        console.error('loadMenu error:', err);
+      }
+    };
+    loadMenu();
+  }, []);
+
+  const addToCart = (item: MenuItem) => {
+    if (isOrderActive) return;
     setCart(prev => {
-      const existing = prev.find(i => i.item.id === item.id);
-      if (existing) return prev.map(i => i.item.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      const existing = prev.find(ci => ci.item.id === item.id);
+      if (existing) return prev.map(ci => ci.item.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
       return [...prev, { item, quantity: 1 }];
     });
   };
 
-  const updateCart = (id: number, delta: number) => {
-    setCart(prev => prev.map(i => i.item.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i).filter(i => i.quantity > 0));
+  const updateCart = (itemId: number, delta: number) => {
+    if (isOrderActive) return;
+    setCart(prev => prev.map(ci => ci.item.id === itemId ? { ...ci, quantity: Math.max(0, ci.quantity + delta) } : ci).filter(ci => ci.quantity > 0));
+  };
+  
+  const clearCart = () => {
+    if (!isOrderActive) setCart([]);
+  };
+  
+  const cartTotal = useMemo(() => cart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0), [cart]);
+  const cartCount = useMemo(() => cart.reduce((acc, curr) => acc + curr.quantity, 0), [cart]);
+
+  useEffect(() => { 
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); 
+  }, [view]);
+
+  // If served, order is no longer active AND cart is cleared
+  useEffect(() => {
+    if (progress === 4) {
+      setIsOrderActive(false);
+      setCart([]); // Automatically empty the cart when the order is served
+      setCurrentOrderId(null);
+    }
+  }, [progress]);
+
+  const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa') => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    try {
+      if (API_URL) {
+        const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tableNumber: 6, cart, paymentMethod, total: cartTotal }),
+        });
+        if (!res.ok) throw new Error(`Order API error: ${res.status}`);
+        const body = await res.json();
+        const orderId = body.orderId || body.id || body.order_id;
+        setCurrentOrderId(orderId ?? null);
+      }
+    } catch (err) {
+      console.error('Place order error:', err);
+    } finally {
+      setIsOrderActive(true);
+      setProgress(0);
+      setView('tracking');
+    }
+  };
+
+  const handleNewOrderStart = () => {
+    setCart([]);
+    setIsOrderActive(false);
+    setProgress(0);
+    setView('menu');
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-sans text-zinc-900 selection:bg-cyan-100 selection:text-cyan-900">
-      <nav className="fixed top-0 left-0 right-0 z-[200] bg-white/80 backdrop-blur-xl border-b border-zinc-100 px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('landing')}>
-          <div className="w-10 h-10 bg-cyan-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-cyan-600/20">
-            <CyberWaitLogo className="w-6 h-6" />
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
+      <header className="fixed top-0 inset-x-0 h-24 md:h-28 bg-white/90 backdrop-blur-3xl border-b border-zinc-100 z-[110] px-6 md:px-16 flex items-center justify-between shadow-sm">
+        <div onClick={() => !isOrderActive && setView('landing')} className={`flex items-center gap-4 md:gap-7 ${isOrderActive ? 'cursor-default' : 'cursor-pointer group'}`}>
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-[#2D7D90] rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl group-hover:rotate-12 transition-transform duration-500 ring-4 ring-[#2D7D90]/5">
+            <CyberWaitLogo className="w-8 h-8 md:w-10 md:h-10 text-white" />
           </div>
-          <div>
-            <span className="font-black tracking-tighter text-2xl italic leading-none block">CYBERWAIT™</span>
-            <span className="text-[8px] font-black uppercase tracking-[0.4em] text-cyan-600 leading-none">Smart Restaurant</span>
+          <div className="flex flex-col">
+            <span className="font-black text-2xl md:text-3xl tracking-tighter uppercase italic leading-none text-zinc-900">CyberWait™</span>
+            <span className="text-[10px] md:text-[11px] font-black text-[#2D7D90] tracking-[0.4em] uppercase mt-2">Smart Restaurant</span>
           </div>
         </div>
-      </nav>
-
-      <main className="pt-28">
+        {view !== 'landing' && !isOrderActive && (
+          <button 
+            onClick={() => setView(view === 'checkout' ? 'menu' : 'checkout')} 
+            className="relative p-4 md:p-5 bg-white border-2 border-zinc-100 rounded-[1.8rem] hover:border-[#2D7D90] transition-all shadow-md active:scale-90 group"
+          >
+            <CartIcon />
+            {cartCount > 0 && <span className="absolute -top-3 -right-3 bg-[#2D7D90] text-white text-[10px] font-black w-8 h-8 flex items-center justify-center rounded-full border-4 border-white shadow-2xl animate-bounce group-hover:scale-110 transition-transform">{cartCount}</span>}
+          </button>
+        )}
+      </header>
+      <main className="pt-32 md:pt-48 flex-grow">
         {view === 'landing' && <LandingView onStart={() => setView('menu')} />}
         {view === 'menu' && (
           <MenuView 
-            menuItems={MENU_ITEMS}
-            onAddToCart={onAddToCart} 
+            onAddToCart={addToCart} 
             onCheckout={() => setView('checkout')} 
             cartCount={cartCount} 
-            cartTotal={cartTotal}
+            cartTotal={cartTotal} 
+            isOrderActive={isOrderActive}
+            menuItems={menuItems}
           />
         )}
         {view === 'checkout' && (
           <CheckoutView 
             cart={cart} 
-            updateCart={updateCart}
-            clearCart={() => setCart([])}
-            onBack={() => setView('menu')}
-            onComplete={() => setView('tracking')}
+            updateCart={updateCart} 
+            clearCart={clearCart} 
+            onComplete={handlePlaceOrder} 
+            onBack={() => setView('menu')} 
+            isOrderActive={isOrderActive}
           />
         )}
-        {view === 'tracking' && <TrackingView progress={progress} setProgress={setProgress} onNewOrder={() => {setCart([]); setView('menu'); setProgress(0);}} />}
+        {view === 'tracking' && (
+          <TrackingView 
+            progress={progress} 
+            setProgress={setProgress}
+            onNewOrder={handleNewOrderStart}
+          />
+        )}
       </main>
+      <footer className="py-16 border-t border-zinc-100 bg-white text-center">
+        <p className="text-[11px] font-black uppercase tracking-[0.5em] text-zinc-300">© 2025 CyberWait Systems International</p>
+      </footer>
+      <div className="fixed inset-0 -z-10 bg-grid-pattern opacity-60 pointer-events-none"></div>
     </div>
   );
 }
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<App />);
