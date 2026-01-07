@@ -394,6 +394,8 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
   const MAP_W = isMobile ? 820 : 1050;
   const MAP_H = isMobile ? 720 : 900;
+  const BASE_SCALE = isMobile ? 1.05 : 1;
+
 
 
   useEffect(() => {
@@ -559,7 +561,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-2 sm:p-4 md:p-6 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+             <div className="absolute inset-0 p-1 sm:p-2 md:p-4 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
                 <div className="border-[6px] border-zinc-100 rounded-[3rem] relative bg-white shadow-2xl overflow-hidden" style={{ width: MAP_W + 'px', height: MAP_H + 'px' }}>
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
