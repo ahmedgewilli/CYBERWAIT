@@ -275,7 +275,7 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
           {!isOrderActive && (
             <Card className="ring-1 ring-zinc-100 overflow-hidden p-0">
               <div className="p-8 pb-4 border-b border-zinc-50">
-                <h2 className="text-4xl font-black tracking-tighter italic text-zinc-900 uppercase ">PAYMENT METHOD</h2>
+                <h2 className="text-4xl font-black tracking-tighter italic text-zinc-900 uppercase">PAYMENT METHOD</h2>
               </div>
               <div className="p-8">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
