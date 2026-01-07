@@ -391,8 +391,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   // Use a square logical map so it scales nicely on mobile (keeps content visible)
   const isMobile = window.innerWidth < 768;
-  const MAP_W = isMobile ? 900 : 1200;
-  const MAP_H = isMobile ? 900 : 1200;
+
+  const MAP_W = isMobile ? 820 : 1050;
+  const MAP_H = isMobile ? 720 : 900;
+
 
   useEffect(() => {
     const compute = () => {
@@ -540,9 +542,9 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
             ref={mapContainerRef}
             className="
               w-full
-              h-[70vh]
-              sm:h-[75vh]
-              md:h-[850px]
+              h-[62vh]
+              sm:h-[65vh]
+              md:h-[800px]
               relative
               p-0
               overflow-hidden
@@ -550,8 +552,8 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
               shadow-3xl
               bg-zinc-50
             "
-            style={{ touchAction: 'pan-y' }}
           >
+
 
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
