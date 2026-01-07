@@ -390,7 +390,9 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   // Unified pan handlers (mouse, pointer, touch)
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   // Use a square logical map so it scales nicely on mobile (keeps content visible)
-  const MAP_W = 1200, MAP_H = 1200;
+  const isMobile = window.innerWidth < 768;
+  const MAP_W = isMobile ? 900 : 1200;
+  const MAP_H = isMobile ? 900 : 1200;
 
   useEffect(() => {
     const compute = () => {
@@ -483,38 +485,10 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       applyMomentum();
     }
   };
-  // Unified pan handlers (mouse, pointer, touch)
-  const handleStart = (x: number, y: number) => {
-    setIsPanning(true);
-    startPos.current = { x: x - offset.x, y: y - offset.y };
-  };
-
-  const handleMoveTo = (x: number, y: number) => {
-    if (!isPanning) return;
-    setOffset({ x: x - startPos.current.x, y: y - startPos.current.y });
-  };
-
-  const handleEnd = () => setIsPanning(false);
 
   const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY);
   const handleMouseMove = (e: React.MouseEvent) => handleMoveTo(e.clientX, e.clientY);
   const handleMouseUp = () => handleEnd();
-
-  const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
-  const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
-  const handlePointerUp = (e: React.PointerEvent) => { (e.target as Element)?.releasePointerCapture?.(e.pointerId); handleEnd(); };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches && e.touches[0];
-    if (!t) return;
-    handleStart(t.clientX, t.clientY);
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const t = e.touches && e.touches[0];
-    if (!t) return;
-    handleMoveTo(t.clientX, t.clientY);
-  };
-  const handleTouchEnd = () => handleEnd();
 
   const handlePointerDown = (e: React.PointerEvent) => { (e.target as Element)?.setPointerCapture?.(e.pointerId); handleStart(e.clientX, e.clientY); };
   const handlePointerMove = (e: React.PointerEvent) => handleMoveTo(e.clientX, e.clientY);
@@ -545,18 +519,45 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 animate-fade-in pb-20">
-      {/* reduced header: the large panels above the map were removed per UX request */}
-      <div className="mb-4" />
+      <div className="flex flex-col items-center text-center mb-16 gap-8">
+        <div>
+          <h2 className="text-5xl md:text-6xl font-black tracking-tighter italic text-zinc-900 uppercase">Live Tracking</h2>
+          <p className="text-zinc-500 font-medium text-lg mt-2">Your humanoid waiter is handling your request with care.</p>
+        </div>
+        {progress === 4 && (
+          <button 
+            onClick={onNewOrder} 
+            className="px-14 py-5 bg-[#2D7D90] text-white rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-95 shadow-xl"
+          >
+            Start New Order
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <Card ref={mapContainerRef} className="w-full aspect-square md:h-[920px] relative p-0 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50" style={{ touchAction: 'pan-y' }}>
+          <Card
+            ref={mapContainerRef}
+            className="
+              w-full
+              h-[70vh]
+              sm:h-[75vh]
+              md:h-[850px]
+              relative
+              p-0
+              overflow-hidden
+              border-zinc-200
+              shadow-3xl
+              bg-zinc-50
+            "
+            style={{ touchAction: 'pan-y' }}
+          >
 
              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
                <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
              </div>
-             <div className="absolute inset-0 p-4 md:p-6 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+             <div className="absolute inset-0 p-2 sm:p-4 md:p-6 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
                 <div className="border-[6px] border-zinc-100 rounded-[3rem] relative bg-white shadow-2xl overflow-hidden" style={{ width: MAP_W + 'px', height: MAP_H + 'px' }}>
                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                    <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20"></div>
@@ -589,23 +590,9 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
                    </div>
                 </div>
              </div>
-             <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none z-30">
-                <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-md border border-zinc-100 text-[10px] font-black text-[#2D7D90] uppercase tracking-[0.24em] flex items-center gap-3 shadow-sm">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#2D7D90] animate-pulse ring-2 ring-[#2D7D90]/20"></div>
-                  <span>SCANNING ACTIVE</span>
-                </div>
-             </div>
-             <div className="absolute bottom-10 left-10 right-10 flex justify-center pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-3xl px-12 py-8 rounded-full border border-zinc-100 shadow-2xl flex items-center gap-10">
-                   <div className="flex flex-col">
-                      <h4 className="font-black text-2xl uppercase tracking-tighter text-zinc-900 leading-none mb-1 italic">
-                        {progress === 4 ? "ORDER DELIVERED" : "ROBOT ON THE WAY"}
-                      </h4>
-                      <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Table #06 • Zone B</p>
-                   </div>
-                   <div className="w-48 bg-zinc-100 h-3 rounded-full overflow-hidden border border-zinc-200">
-                      <div className="bg-[#2D7D90] h-full transition-all duration-1000" style={{ width: `${(progress / 4) * 100}%` }}></div>
-                   </div>
+             <div className="absolute top-10 left-10 flex flex-col gap-6 pointer-events-none">
+                <div className="bg-white/95 backdrop-blur-3xl px-6 py-3 rounded-2xl border border-zinc-100 text-[11px] font-black text-[#2D7D90] uppercase tracking-[0.3em] flex items-center gap-4 shadow-xl">
+                  <div className="w-3 h-3 rounded-full bg-[#2D7D90] animate-pulse ring-4 ring-[#2D7D90]/20"></div> SCANNING ACTIVE
                 </div>
              </div>
           </Card>
