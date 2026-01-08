@@ -31,7 +31,13 @@ router.post('/', async (req, res) => {
       [orderNumber, total, paymentMethod, cardLast4, cardExpiry, 'pending']
     );
     
-    const orderId = orderResult.rows[0].id;
+    const orderRow = orderResult.rows[0];
+    if (!orderRow || !orderRow.id) {
+      console.error('backend orders: insert returned no row', orderResult.rows);
+      return res.status(500).json({ error: 'insert returned no row', persisted: false });
+    }
+
+    const orderId = orderRow.id;
     
     // Insert order items
     for (const item of cart) {
@@ -41,9 +47,11 @@ router.post('/', async (req, res) => {
       );
     }
     
-    res.json({ orderId, orderNumber, status: 'pending' });
+    console.log('backend orders: persisted order id', orderId);
+    res.json({ orderId, orderNumber: orderRow.order_number, status: 'pending', persisted: true, order: orderRow });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('backend orders error:', error);
+    res.status(500).json({ error: error.message, persisted: false });
   }
 });
 
