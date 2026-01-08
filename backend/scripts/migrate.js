@@ -17,8 +17,40 @@ const { Client } = require('pg');
       process.exit(1);
     }
 
-    // Prefer supabase migration file if present
+    // Check for a dedicated migrations directory: run any .sql files there in order
     const root = path.resolve(__dirname, '..', '..');
+    const migrationsDir = path.join(root, 'backend', 'migrations');
+    if (fs.existsSync(migrationsDir)) {
+      const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+      if (files.length) {
+        console.log('Found migration files:', files);
+        const client = new Client({ connectionString: databaseUrl });
+        await client.connect();
+        for (const file of files) {
+          const p = path.join(migrationsDir, file);
+          const sql = fs.readFileSync(p, 'utf8');
+          console.log('Running migration file:', p);
+          await client.query(sql);
+        }
+
+        // Basic verification queries
+        const checks = {};
+        try {
+          const r1 = await client.query("SELECT COUNT(*) AS cnt FROM menu;");
+          checks.menu = Number(r1.rows[0].cnt);
+        } catch (e) { checks.menu = null; }
+        try {
+          const r2 = await client.query("SELECT COUNT(*) AS cnt FROM orders;");
+          checks.orders = Number(r2.rows[0].cnt);
+        } catch (e) { checks.orders = null; }
+
+        console.log('Migrations complete. Verification:', checks);
+        await client.end();
+        process.exit(0);
+      }
+    }
+
+    // Prefer supabase migration file if present (legacy fallback)
     const candidates = [
       path.join(root, 'supabase', '00-init.sql'),
       path.join(root, 'backend', 'database.sql'),

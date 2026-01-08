@@ -62,6 +62,20 @@ Run the SQL file to create tables and insert sample data:
 psql -U postgres -d cyberwait -f database.sql
 ```
 
+You can also run the migration runner which will execute any SQL files placed in `backend/migrations/` (in lexicographic order):
+
+**PowerShell**
+```powershell
+$env:DATABASE_URL = 'postgresql://postgres:yourpass@localhost:5432/cyberwait'
+npm run migrate --prefix backend
+```
+
+**bash**
+```bash
+DATABASE_URL="postgresql://postgres:yourpass@localhost:5432/cyberwait" npm run migrate --prefix backend
+```
+
+This is useful for incremental migrations such as removing obsolete columns or making small schema updates.
 Or manually:
 1. Open `backend/database.sql`
 2. Copy all the SQL commands
