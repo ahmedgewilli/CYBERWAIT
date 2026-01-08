@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { tableNumber = 6, cart = [], paymentMethod = 'visa', total = 0, cardLast4 = null, cardExpiry = null } = req.body || {};
+  const { cart = [], paymentMethod = 'visa', total = 0, cardLast4 = null, cardExpiry = null } = req.body || {};
   const sb = createSupabaseServerClient();
 
   if (!sb) {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   try {
     // Insert order using service role key; store only masked card info (never store CVV)
-    const orderResult = await sb.from('orders').insert([{ order_number: `ORD-${Date.now()}`, table_number: tableNumber, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' }]).select();
+    const orderResult = await sb.from('orders').insert([{ order_number: `ORD-${Date.now()}`, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' }]).select();
     const orderId = orderResult.data?.[0]?.id || orderResult[0]?.id;
 
     // Insert order items

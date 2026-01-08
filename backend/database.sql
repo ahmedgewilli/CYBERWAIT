@@ -12,7 +12,6 @@ CREATE TABLE menu_items (
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     order_number VARCHAR(50) UNIQUE NOT NULL,
-    table_number INTEGER,
     total DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(50),
     card_last4 VARCHAR(4),

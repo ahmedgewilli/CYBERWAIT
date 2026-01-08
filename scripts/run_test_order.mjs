@@ -2,7 +2,6 @@
 
 (async () => {
   const reqBody = {
-    tableNumber: 3,
     cart: [{ item: { id: 1, price: 18.5 }, quantity: 1 }],
     paymentMethod: 'visa',
     total: 18.5,
@@ -18,7 +17,6 @@
   const simulatedDBRow = {
     id: Math.floor(Math.random() * 1000000),
     order_number: orderNumber,
-    table_number: reqBody.tableNumber,
     total: reqBody.total,
     payment_method: reqBody.paymentMethod,
     card_last4: cardLast4,
@@ -29,7 +27,6 @@
 
   console.log('Simulated API payload sent to server:');
   console.log({
-    tableNumber: reqBody.tableNumber,
     cart: reqBody.cart,
     paymentMethod: reqBody.paymentMethod,
     total: reqBody.total,

@@ -75,7 +75,6 @@ The server will run on `http://localhost:5000` by default.
 - `POST /api/orders` - Create a new order
   ```json
   {
-    "tableNumber": 6,
     "cart": [...],
     "paymentMethod": "visa",
     "total": 45.50
@@ -95,6 +94,6 @@ The server will run on `http://localhost:5000` by default.
 ## Database Schema
 
 - **menu_items**: Stores menu items (id, name, category, price, description, image)
-- **orders**: Stores order information (id, order_number, table_number, total, payment_method, status, created_at)
+- **orders**: Stores order information (id, order_number, total, payment_method, card_last4, card_expiry, status, created_at)
 - **order_items**: Stores individual items in each order (id, order_id, menu_item_id, quantity, price)
 

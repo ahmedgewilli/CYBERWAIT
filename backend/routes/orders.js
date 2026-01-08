@@ -6,7 +6,7 @@ const pool = require('../db/connection');
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, order_number, table_number, total, payment_method, card_last4, card_expiry, status, created_at
+      `SELECT id, order_number, total, payment_method, card_last4, card_expiry, status, created_at
        FROM orders
        ORDER BY created_at DESC
        LIMIT 50`
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 
 // Create new order
 router.post('/', async (req, res) => {
-  const { tableNumber, cart, paymentMethod, total, cardLast4 = null, cardExpiry = null } = req.body;
+  const { cart, paymentMethod, total, cardLast4 = null, cardExpiry = null } = req.body;
   
   try {
     // Generate order number
@@ -27,8 +27,8 @@ router.post('/', async (req, res) => {
     
     // Create order (store masked card info only)
     const orderResult = await pool.query(
-      'INSERT INTO orders (order_number, table_number, total, payment_method, card_last4, card_expiry, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [orderNumber, tableNumber || 6, total, paymentMethod, cardLast4, cardExpiry, 'pending']
+      'INSERT INTO orders (order_number, total, payment_method, card_last4, card_expiry, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [orderNumber, total, paymentMethod, cardLast4, cardExpiry, 'pending']
     );
     
     const orderId = orderResult.rows[0].id;
