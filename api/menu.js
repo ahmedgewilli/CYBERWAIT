@@ -23,11 +23,21 @@ export default async function handler(req, res) {
       const r = await sb.from('menu_items').select('*').order('id');
       if (r.error) {
         console.warn('Supabase fallback table error:', r.error?.message || r.error);
+        res.setHeader('x-menu-source', 'seed');
         return res.status(200).json(MENU_ITEMS);
       }
-      return res.status(200).json(r.data || MENU_ITEMS);
+
+      if (!r.data || r.data.length === 0) {
+        console.warn('Supabase menu tables are empty — falling back to bundled MENU_ITEMS');
+        res.setHeader('x-menu-source', 'seed');
+        return res.status(200).json(MENU_ITEMS);
+      }
+
+      res.setHeader('x-menu-source', 'supabase.menu_items');
+      return res.status(200).json(r.data);
     }
 
+    res.setHeader('x-menu-source', 'supabase.menu');
     return res.status(200).json(data);
   } catch (err) {
     console.error('menu API error (unexpected):', err);
