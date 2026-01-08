@@ -274,9 +274,8 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
 
           {!isOrderActive && (
             <Card className="ring-1 ring-zinc-100 overflow-hidden p-0">
-              <div className="p-6 pb-4 border-b border-zinc-50 flex items-center justify-center">
-                <h2 className="text-3xl md:text-4xl font-black tracking-tighter italic text-zinc-900 uppercase mr-4">PAYMENT METHOD</h2>
-                <div className="text-sm font-black text-zinc-500 uppercase tracking-widest">{paymentMethod === 'visa' ? 'VISA / CC' : paymentMethod === 'apple' ? 'APPLE PAY' : 'CASH'}</div>
+              <div className="p-6 pb-4 border-b border-zinc-50 text-center">
+                <h2 className="text-3xl md:text-4xl font-black tracking-tighter italic text-zinc-900 uppercase whitespace-nowrap">PAYMENT METHOD</h2>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -530,21 +529,25 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       <div className="mb-4" />
 
       <div className="space-y-8">
-        <Card className="w-full relative p-8 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50">
-          <div className="flex flex-col items-center justify-center py-6">
-            <div className="w-28 h-28 md:w-36 md:h-36 bg-[#2D7D90] text-white rounded-full shadow-2xl flex items-center justify-center mb-4">
-              <CyberWaitLogo className="w-12 h-12 md:w-20 md:h-20 text-white" />
-            </div>
-            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-zinc-900 mb-2">Robot Mode</h3>
-            <p className="text-sm text-zinc-500 mb-4">{robotMood.msg}</p>
-            <div className="w-full md:w-3/4 bg-zinc-100 h-3 rounded-full overflow-hidden border border-zinc-200">
-               <div className="bg-[#2D7D90] h-full transition-all duration-700" style={{ width: `${(progress / 4) * 100}%` }} />
-            </div>
-          </div>
+        {/* Robot Mode removed — using Robot Mood panel above Service Log instead */}
+
+        <Card className="bg-white border-zinc-100 shadow-xl">           <div className="flex justify-between items-center mb-10">
+             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
+             <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
+           </div>
+           <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
+              <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
+              <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
+           </div>
+           <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
+              <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>
+              <div className="flex gap-2">
+                 {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
+              </div>
+           </div>
         </Card>
 
-        <Card className="bg-white border-zinc-100 shadow-xl">
-          <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
+        <Card className="bg-white border-zinc-100 shadow-xl">          <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
           <div className="space-y-12 relative ml-3">
             <div className="absolute left-[15px] top-2 bottom-2 w-1 bg-zinc-50"></div>
             {[
@@ -564,22 +567,6 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
           </div>
         </Card>
 
-        <Card className="bg-white border-zinc-100 shadow-xl">
-           <div className="flex justify-between items-center mb-10">
-             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
-             <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
-           </div>
-           <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
-              <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
-              <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
-           </div>
-           <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
-              <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>
-              <div className="flex gap-2">
-                 {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
-              </div>
-           </div>
-        </Card>
       </div>
     </div>
   );
