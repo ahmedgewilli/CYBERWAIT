@@ -332,10 +332,27 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
               <div className="flex justify-between items-center pt-8 border-t border-zinc-100"><span className="text-2xl font-black italic uppercase text-zinc-900">Pay Now</span><span className="text-5xl font-black text-zinc-900 tracking-tighter">${cartTotal.toFixed(2)}</span></div>
             </div>
             {!isOrderActive && (
+                <>
                 <button onClick={() => onComplete(paymentMethod, { card: { cardName, cardNumber, cardExpiry, cardCCV } })} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
                 Pay & Confirm
               </button>
-            )} 
+
+              {/* DEV: client-side order test button — only rendered when parent passes onClientOrder */}
+              {typeof onComplete === 'function' && (onComplete as any) && (onComplete as any).name && false}
+              {typeof (onComplete as any) !== 'undefined' /* placeholder to keep TS happy */}
+              {typeof (onComplete as any) !== 'undefined' && (/* no-op for types */ null)}
+
+              {typeof ({} as any) /* keep linter quiet */ && null}
+
+              {typeof ({} as any) !== 'undefined' && null}
+
+              {typeof (window) !== 'undefined' && import.meta.env.DEV && (
+                <button onClick={() => onClientOrder && onClientOrder()} className="w-full mt-6 py-4 bg-white text-[#2D7D90] font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-md hover:scale-[1.02] active:scale-95 border border-zinc-100">
+                  Try client-side order (DEV)
+                </button>
+              )}
+              </>
+            )}
           </Card>
         </div>
       )}
@@ -633,12 +650,13 @@ function App() {
           const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
           if (res.ok) {
             const data = await res.json();
-            // If the API returns an empty array, fall back to the bundled seed to avoid wiping the UI
-            if (Array.isArray(data) && data.length === 0) {
-              console.warn('Primary menu API returned empty array — falling back to bundled MENU_ITEMS');
-              setMenuItems(MENU_ITEMS);
+            // If the API returns an empty array or items without required fields, fall back to the bundled seed
+            const valid = Array.isArray(data) ? data.filter((it: any) => it && it.name && (it.price !== null && it.price !== undefined) && it.description && it.image && it.category) : [];
+            if (valid.length > 0) {
+              setMenuItems(valid as MenuItem[]);
             } else {
-              setMenuItems(data as MenuItem[]);
+              console.warn('Primary menu API returned empty/invalid items — falling back to bundled MENU_ITEMS');
+              setMenuItems(MENU_ITEMS);
             }
             return;
           }
@@ -742,6 +760,39 @@ function App() {
     setView('menu');
   };
 
+  // Development helper: attempt to place an order directly using the client-side Supabase anon key
+  // Note: this requires the public anon key and appropriate RLS policies that allow inserts
+  const placeOrder = async (cartItems: CartItem[], total: number) => {
+    try {
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([{ total, status: 'pending' }])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('placeOrder (client) error:', orderError);
+        return null;
+      }
+
+      const itemsToInsert = cartItems.map(ci => ({
+        order_id: order.id,
+        menu_item_id: ci.item?.id ?? ci.id,
+        quantity: ci.quantity,
+        price: ci.item?.price ?? ci.price
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
+      if (itemsError) console.error('placeOrder (items) error:', itemsError);
+
+      alert('Order placed (client) — check Supabase if inserts succeeded');
+      return order;
+    } catch (err) {
+      console.error('placeOrder unexpected error:', err);
+      return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col">
       <header className="fixed top-0 inset-x-0 h-24 md:h-28 bg-white/90 backdrop-blur-3xl border-b border-zinc-100 z-[110] px-6 md:px-16 flex items-center justify-between shadow-sm">
@@ -784,6 +835,8 @@ function App() {
             onComplete={handlePlaceOrder} 
             onBack={() => setView('menu')} 
             isOrderActive={isOrderActive}
+            // expose client-side test helper only in dev
+            onClientOrder={import.meta.env.DEV ? () => placeOrder(cart, cartTotal) : undefined}
           />
         )}
         {view === 'tracking' && (
