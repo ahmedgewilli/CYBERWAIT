@@ -274,18 +274,19 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
 
           {!isOrderActive && (
             <Card className="ring-1 ring-zinc-100 overflow-hidden p-0">
-              <div className="p-8 pb-4 border-b border-zinc-50">
-                <h2 className="text-4xl font-black tracking-tighter italic text-zinc-900 uppercase">PAYMENT METHOD</h2>
+              <div className="p-6 pb-4 border-b border-zinc-50 flex items-center justify-center">
+                <h2 className="text-3xl md:text-4xl font-black tracking-tighter italic text-zinc-900 uppercase mr-4">PAYMENT METHOD</h2>
+                <div className="text-sm font-black text-zinc-500 uppercase tracking-widest">{paymentMethod === 'visa' ? 'VISA / CC' : paymentMethod === 'apple' ? 'APPLE PAY' : 'CASH'}</div>
               </div>
-              <div className="p-8">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <button onClick={() => setPaymentMethod('visa')} className={`flex flex-col items-center gap-4 p-8 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'visa' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
+              <div className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <button onClick={() => setPaymentMethod('visa')} className={`w-full flex flex-col items-center gap-3 p-6 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'visa' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
                     <div className="font-black text-[10px] tracking-widest uppercase">VISA / CC</div><span className="text-sm font-bold">Secure Card</span>
                   </button>
-                  <button onClick={() => setPaymentMethod('apple')} className={`flex flex-col items-center gap-4 p-8 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'apple' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
+                  <button onClick={() => setPaymentMethod('apple')} className={`w-full flex flex-col items-center gap-3 p-6 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'apple' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
                     <ApplePayIcon /><span className="text-sm font-bold">Apple Pay</span>
                   </button>
-                  <button onClick={() => setPaymentMethod('cash')} className={`flex flex-col items-center gap-4 p-8 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'cash' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
+                  <button onClick={() => setPaymentMethod('cash')} className={`w-full flex flex-col items-center gap-3 p-6 rounded-[2.5rem] border-4 transition-all ${paymentMethod === 'cash' ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-105' : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'}`}>
                     <CashIcon /><span className="text-sm font-bold">Cash at Counter</span>
                   </button>
                 </div>
@@ -528,111 +529,57 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
       {/* header removed to maximize map vertical space */}
       <div className="mb-4" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2">
-          <Card
-            ref={mapContainerRef}
-            style={{ touchAction: 'pan-y' }}
-            className="
-              w-full
-              h-[62vh]
-              sm:h-[65vh]
-              md:h-[800px]
-              relative
-              p-0
-              overflow-hidden
-              border-zinc-200
-              shadow-3xl
-              bg-zinc-50
-            "
-          >
-
-
-             <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] bg-[radial-gradient(circle,rgba(45,125,144,0.1)_0%,transparent_75%)] animate-pulse"></div>
-               <div className="w-full h-full bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-             </div>
-             <div className="absolute inset-0 p-1 sm:p-2 md:p-4 transition-transform duration-100 ease-out" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
-                <div className="border-[4px] border-zinc-100 rounded-[1.5rem] relative bg-white shadow-2xl overflow-hidden" style={{ width: MAP_W + 'px', height: MAP_H + 'px' }}>
-                   <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
-                   <div className="absolute top-0 right-0 w-[450px] h-[250px] border-l-4 border-b-4 border-zinc-50 bg-zinc-50/20 hidden md:block"></div>
-                   <div className="absolute top-0 left-0 w-[400px] h-[350px] bg-zinc-50 border-r-4 border-b-4 border-zinc-100 p-6 hidden md:flex flex-col">
-                      <span className="text-[14px] font-black uppercase tracking-[0.5em] text-zinc-900 mb-10 border-b-2 border-zinc-100 pb-2">KITCHEN</span>
-                      <div className="grid grid-cols-3 gap-6">
-                        {[1,2,3,4,5,6].map(i => <div key={i} className="h-12 bg-white border-2 border-zinc-100 rounded-xl flex items-center justify-center text-[8px] font-black text-zinc-200">BAY_{i}</div>)}
-                      </div>
-                   </div>
-                   {[1, 2, 3, 4, 5, 6].map((tbl) => {
-                     const isTarget = tbl === 6;
-                     return (
-                      <div key={tbl} className={`absolute w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center font-black text-xs transition-all ${isTarget ? 'border-[#2D7D90] bg-[#e6f4f7] text-[#2D7D90] shadow-xl scale-110 z-10' : 'border-zinc-100 bg-zinc-50/20 text-zinc-200'}`} style={{ 
-                        top: `${Math.floor((tbl-1)/2) * 22 + 38}%`, left: `${((tbl-1)%2) * 22 + 38}%` 
-                      }}>
-                        <span className="text-[11px] opacity-40 mb-1 tracking-tighter uppercase">TABLE</span>
-                        <span className="text-lg">#{tbl}</span>
-                        {isTarget && <div className="absolute -top-16 animate-bounce text-[#2D7D90] text-4xl">📍</div>}
-                      </div>
-                    )})}
-                   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
-                     <path d={`M 200,175 Q 300,700 ${table6Left + 56},${table6Top + 56}`} stroke="#2D7D90" strokeWidth="12" strokeDasharray="20 20" fill="none" strokeLinecap="round" />
-                   </svg>
-                   <div className="absolute w-20 h-20 md:w-32 md:h-32 bg-[#2D7D90] text-white rounded-[3rem] md:rounded-[4.5rem] shadow-2xl flex items-center justify-center animate-bounce transition-all duration-1000 z-[100] border-[6px] border-white" 
-                    style={{ 
-                        top: progress < 3 ? '175px' : progress === 3 ? '550px' : `${table6Top - 8}px`, 
-                        left: progress < 3 ? '200px' : progress === 3 ? '450px' : `${table6Left - 8}px` 
-                    }}>
-                     <CyberWaitLogo className="w-12 h-12 md:w-20 md:h-20 text-white" />
-                   </div>
-                </div>
-             </div>
-             <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none z-30">
-                <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-md border border-zinc-100 text-[10px] font-black text-[#2D7D90] uppercase tracking-[0.24em] flex items-center gap-3 shadow-sm">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#2D7D90] animate-pulse ring-2 ring-[#2D7D90]/20"></div>
-                  <span>SCANNING ACTIVE</span>
-                </div>
-             </div>
-          </Card>
-        </div>
-        
-        <div className="space-y-8">
-          <Card className="bg-white border-zinc-100 shadow-xl">
-            <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
-            <div className="space-y-12 relative ml-3">
-              <div className="absolute left-[15px] top-2 bottom-2 w-1 bg-zinc-50"></div>
-              {[
-                { label: 'Order Received', step: 0 },
-                { label: 'Chef Preparing', step: 1 },
-                { label: 'Tray Loaded', step: 2 },
-                { label: 'Out For Delivery', step: 3 },
-                { label: 'Served', step: 4 }
-              ].map((item, idx) => {
-                const s = progress > idx ? 'done' : progress === idx ? 'active' : 'pending';
-                return (
-                <div key={idx} className="flex gap-8 items-center relative z-10">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-black border-[3px] transition-all duration-700 ${s === 'done' ? 'bg-[#10b981] border-[#10b981] text-white shadow-lg' : s === 'active' ? 'bg-[#2D7D90] border-[#2D7D90] text-white shadow-xl scale-110' : 'bg-white border-zinc-100 text-zinc-300'}`}>{s === 'done' ? '✓' : idx + 1}</div>
-                  <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${s === 'pending' ? 'text-zinc-300' : 'text-zinc-900'}`}>{item.label}</h4>
-                </div>
-              )})}
+      <div className="space-y-8">
+        <Card className="w-full relative p-8 overflow-hidden border-zinc-200 shadow-3xl bg-zinc-50">
+          <div className="flex flex-col items-center justify-center py-6">
+            <div className="w-28 h-28 md:w-36 md:h-36 bg-[#2D7D90] text-white rounded-full shadow-2xl flex items-center justify-center mb-4">
+              <CyberWaitLogo className="w-12 h-12 md:w-20 md:h-20 text-white" />
             </div>
-          </Card>
-          
-          <Card className="bg-white border-zinc-100 shadow-xl">
-             <div className="flex justify-between items-center mb-10">
-               <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
-               <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
-             </div>
-             <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
-                <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
-                <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
-             </div>
-             <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
-                <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">POWER BANK</div>
-                <div className="flex gap-2">
-                   {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
-                </div>
-             </div>
-          </Card>
-        </div>
+            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-zinc-900 mb-2">Robot Mode</h3>
+            <p className="text-sm text-zinc-500 mb-4">{robotMood.msg}</p>
+            <div className="w-full md:w-3/4 bg-zinc-100 h-3 rounded-full overflow-hidden border border-zinc-200">
+               <div className="bg-[#2D7D90] h-full transition-all duration-700" style={{ width: `${(progress / 4) * 100}%` }} />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-white border-zinc-100 shadow-xl">
+          <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
+          <div className="space-y-12 relative ml-3">
+            <div className="absolute left-[15px] top-2 bottom-2 w-1 bg-zinc-50"></div>
+            {[
+              { label: 'Order Received', step: 0 },
+              { label: 'Chef Preparing', step: 1 },
+              { label: 'Tray Loaded', step: 2 },
+              { label: 'Out For Delivery', step: 3 },
+              { label: 'Served', step: 4 }
+            ].map((item, idx) => {
+              const s = progress > idx ? 'done' : progress === idx ? 'active' : 'pending';
+              return (
+              <div key={idx} className="flex gap-8 items-center relative z-10">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-black border-[3px] transition-all duration-700 ${s === 'done' ? 'bg-[#10b981] border-[#10b981] text-white shadow-lg' : s === 'active' ? 'bg-[#2D7D90] border-[#2D7D90] text-white shadow-xl scale-110' : 'bg-white border-zinc-100 text-zinc-300'}`}>{s === 'done' ? '✓' : idx + 1}</div>
+                <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${s === 'pending' ? 'text-zinc-300' : 'text-zinc-900'}`}>{item.label}</h4>
+              </div>
+            )})}
+          </div>
+        </Card>
+
+        <Card className="bg-white border-zinc-100 shadow-xl">
+           <div className="flex justify-between items-center mb-10">
+             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
+             <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
+           </div>
+           <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
+              <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
+              <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
+           </div>
+           <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
+              <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>
+              <div className="flex gap-2">
+                 {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
+              </div>
+           </div>
+        </Card>
       </div>
     </div>
   );
