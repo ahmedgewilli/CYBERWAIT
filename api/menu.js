@@ -19,6 +19,13 @@ export default async function handler(req, res) {
       return res.status(200).json(MENU_ITEMS);
     }
 
+    // If the 'menu' query returned an empty array, treat it as a missing table/seed and fall back
+    if (Array.isArray(data) && data.length === 0) {
+      console.warn('Supabase menu returned empty array — falling back to bundled MENU_ITEMS');
+      res.setHeader('x-menu-source', 'seed');
+      return res.status(200).json(MENU_ITEMS);
+    }
+
     if (!data || data.length === 0) {
       const r = await sb.from('menu_items').select('*').order('id');
       if (r.error) {

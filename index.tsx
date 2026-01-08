@@ -611,7 +611,13 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 // --- Main App ---
 function App() {
   const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking'>('landing');
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState(() => {
+  const saved = localStorage.getItem('cyberwait_cart');
+  return saved ? JSON.parse(saved) : [];
+});
+  useEffect(() => {
+  localStorage.setItem('cyberwait_cart', JSON.stringify(cart));
+}, [cart]);
   const [isOrderActive, setIsOrderActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
@@ -627,7 +633,13 @@ function App() {
           const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
           if (res.ok) {
             const data = await res.json();
-            setMenuItems(data as MenuItem[]);
+            // If the API returns an empty array, fall back to the bundled seed to avoid wiping the UI
+            if (Array.isArray(data) && data.length === 0) {
+              console.warn('Primary menu API returned empty array — falling back to bundled MENU_ITEMS');
+              setMenuItems(MENU_ITEMS);
+            } else {
+              setMenuItems(data as MenuItem[]);
+            }
             return;
           }
 
