@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from './_supabaseServer';
+import { createSupabaseServerClient } from './supabaseServer.js';
 import MENU_ITEMS from '../src/menu_seed.js';
 
 export default async function handler(req, res) {
@@ -19,13 +19,18 @@ export default async function handler(req, res) {
       return res.status(200).json(MENU_ITEMS);
     }
 
-    // If the 'menu' query returned an empty array, treat it as a missing table/seed and fall back
-    if (Array.isArray(data) && data.length === 0) {
-      console.warn('Supabase menu returned empty array — falling back to bundled MENU_ITEMS');
-      res.setHeader('x-menu-source', 'seed');
-      return res.status(200).json(MENU_ITEMS);
+    // If the 'menu' query returned data, validate items and return only fully populated items
+    if (Array.isArray(data) && data.length > 0) {
+      // Keep only items that include all required fields we expect in the UI
+      const valid = data.filter((it) => it && it.name && (it.price !== null && it.price !== undefined) && it.description && it.image && it.category);
+      if (valid.length > 0) {
+        res.setHeader('x-menu-source', 'supabase.menu');
+        return res.status(200).json(valid);
+      }
+      console.warn('Supabase menu returned rows but none were fully populated — falling back to menu_items or bundled seed');
     }
 
+    // If no usable 'menu' rows, try 'menu_items' table
     if (!data || data.length === 0) {
       const r = await sb.from('menu_items').select('*').order('id');
       if (r.error) {
