@@ -526,7 +526,6 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 animate-fade-in pb-20">
       {/* header removed to maximize map vertical space */}
-      <div className="mb-4" />
 
       <div className="space-y-8">
         {/* Robot Mode removed — using Robot Mood panel above Service Log instead */}
@@ -538,6 +537,11 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
            <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
               <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
               <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
+              {progress === 4 && (
+                <div className="mt-6 w-full">
+                  <button onClick={() => onNewOrder?.()} className="w-full md:w-auto bg-[#2D7D90] text-white font-black py-3 px-6 rounded-xl hover:opacity-95">Start New Order</button>
+                </div>
+              )}
            </div>
            <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
               <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>

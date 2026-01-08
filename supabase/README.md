@@ -28,4 +28,9 @@ Verification
   - `SELECT * FROM profiles LIMIT 5;`
   - `SELECT * FROM orders LIMIT 5;`
 
+How to view records (quick):
+- Supabase Dashboard → **Table Editor** → pick the table (e.g., `orders`) to browse rows.
+- Or open **SQL Editor** and run `SELECT * FROM orders;` or `SELECT * FROM menu;`.
+- From a terminal, use `psql` with your `DATABASE_URL`: `psql <DATABASE_URL> -c "SELECT * FROM orders LIMIT 20;"`.
+
 If you want, I can run these steps for you — provide a temporary DATABASE_URL (revoked after use).
