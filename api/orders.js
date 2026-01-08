@@ -9,14 +9,23 @@ export default async function handler(req, res) {
 
   if (!sb) {
     // No DB available — create a simple in-memory simulation response
+    console.warn('supabase client not configured on server - running in simulation mode');
     const orderId = Math.floor(Math.random() * 1000000);
-    return res.status(201).json({ orderId, orderNumber: `ORD-${Date.now()}`, status: 'pending' });
+    return res.status(201).json({ orderId, orderNumber: `ORD-${Date.now()}`, status: 'pending', persisted: false, simulated: true });
   }
 
   try {
     // Insert order using service role key; store only masked card info (never store CVV)
-    const orderResult = await sb.from('orders').insert([{ order_number: `ORD-${Date.now()}`, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' }]).select();
-    const orderId = orderResult.data?.[0]?.id || orderResult[0]?.id;
+    const insertPayload = { order_number: `ORD-${Date.now()}`, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' };
+    const orderResult = await sb.from('orders').insert([insertPayload]).select();
+    const orderRow = orderResult.data?.[0] || orderResult[0] || null;
+
+    if (!orderRow || !orderRow.id) {
+      console.error('orders API: insert returned no row', orderResult);
+      return res.status(500).json({ error: 'no row returned from insert', persisted: false });
+    }
+
+    const orderId = orderRow.id;
 
     // Insert order items
     if (Array.isArray(cart) && cart.length && orderId) {
@@ -24,9 +33,10 @@ export default async function handler(req, res) {
       await sb.from('order_items').insert(items);
     }
 
-    return res.status(201).json({ orderId, orderNumber: `ORD-${Date.now()}`, status: 'pending' });
+    console.log('orders API: persisted order id', orderId);
+    return res.status(201).json({ orderId, orderNumber: orderRow.order_number, status: 'pending', persisted: true, order: orderRow });
   } catch (err) {
     console.error('orders API error:', err);
-    return res.status(500).json({ error: String(err) });
+    return res.status(500).json({ error: String(err), persisted: false });
   }
 }
