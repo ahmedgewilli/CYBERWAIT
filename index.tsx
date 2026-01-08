@@ -197,7 +197,19 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive
 
 const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrderActive }: any) => {
   const [paymentMethod, setPaymentMethod] = useState<'visa' | 'apple' | 'cash'>('visa');
+  const [tableNumber, setTableNumber] = useState<number>(1);
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCCV, setCardCCV] = useState('');
+
   const cartTotal = useMemo(() => cart.reduce((acc: number, curr: CartItem) => acc + (curr.item.price * curr.quantity), 0), [cart]);
+
+  const handleWheelTable = (e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY) * -1; // invert so wheel up increases
+    setTableNumber(n => Math.min(6, Math.max(1, n + delta)));
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 animate-slide-up pb-40">
@@ -289,6 +301,37 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
                     <CashIcon /><span className="text-sm font-bold">Cash at Counter</span>
                   </button>
                 </div>
+
+                {paymentMethod === 'visa' && (
+                  <div className="mt-6 grid gap-4">
+                    <label className="block text-sm font-bold">Cardholder Name
+                      <input value={cardName} onChange={e => setCardName(e.target.value)} className="mt-2 w-full px-4 py-3 rounded-xl border border-zinc-100" placeholder="Full name as on card" />
+                    </label>
+
+                    <label className="block text-sm font-bold">Card Number
+                      <input value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/[^0-9 ]/g, ''))} className="mt-2 w-full px-4 py-3 rounded-xl border border-zinc-100" placeholder="1234 5678 9012 3456" />
+                    </label>
+
+                    <div className="flex gap-4">
+                      <label className="flex-1 text-sm font-bold">Expiry
+                        <input value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} className="mt-2 w-full px-4 py-3 rounded-xl border border-zinc-100" placeholder="MM/YY" />
+                      </label>
+                      <label className="w-32 text-sm font-bold">CCV
+                        <input value={cardCCV} onChange={e => setCardCCV(e.target.value.replace(/[^0-9]/g, ''))} className="mt-2 w-full px-4 py-3 rounded-xl border border-zinc-100" placeholder="123" />
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="text-sm font-bold">Table Number</div>
+                      <input type="number" min={1} max={6} value={tableNumber} onChange={e => setTableNumber(Math.min(6, Math.max(1, Number(e.target.value || 1))))} onWheel={handleWheelTable} className="w-24 px-4 py-3 rounded-xl border border-zinc-100 text-center" />
+                      <div className="text-xs text-zinc-500">Use mouse wheel or type to change (1-6)</div>
+                    </div>
+
+                    <div className="text-xs text-zinc-400">We do not store CVV. For production, use a payment gateway (Stripe/PCI-compliant) and never save full card numbers.</div>
+
+                  </div>
+                )}
+
               </div>
             </Card>
           )}
@@ -300,7 +343,7 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
               <div className="flex justify-between items-center pt-8 border-t border-zinc-100"><span className="text-2xl font-black italic uppercase text-zinc-900">Pay Now</span><span className="text-5xl font-black text-zinc-900 tracking-tighter">${cartTotal.toFixed(2)}</span></div>
             </div>
             {!isOrderActive && (
-                <button onClick={() => onComplete(paymentMethod)} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
+                <button onClick={() => onComplete(paymentMethod, { tableNumber, card: { cardName, cardNumber, cardExpiry, cardCCV } })} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
                 Pay & Confirm
               </button>
             )}
@@ -657,19 +700,30 @@ function App() {
     }
   }, [progress]);
 
-  const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa') => {
+  const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa', opts: any = {}) => {
     const API_URL = import.meta.env.VITE_API_URL;
+    const { tableNumber = 1, card = {} } = opts;
+
+    // Mask sensitive card info — DO NOT send CVV or full card number to server in production
+    const cardNumberDigits = (card.cardNumber || '').replace(/\s+/g, '');
+    const cardLast4 = cardNumberDigits.length >= 4 ? cardNumberDigits.slice(-4) : null;
+    const cardExpiry = card.cardExpiry || null;
+
     try {
       if (API_URL) {
         const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tableNumber: 6, cart, paymentMethod, total: cartTotal }),
+          body: JSON.stringify({ tableNumber, cart, paymentMethod, total: cartTotal, cardLast4, cardExpiry }),
         });
         if (!res.ok) throw new Error(`Order API error: ${res.status}`);
         const body = await res.json();
         const orderId = body.orderId || body.id || body.order_id;
         setCurrentOrderId(orderId ?? null);
+      } else {
+        // Fallback: simulate order id
+        const orderId = Math.floor(Math.random() * 1000000);
+        setCurrentOrderId(orderId);
       }
     } catch (err) {
       console.error('Place order error:', err);

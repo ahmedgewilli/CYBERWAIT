@@ -15,6 +15,8 @@ CREATE TABLE orders (
     table_number INTEGER,
     total DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(50),
+    card_last4 VARCHAR(4),
+    card_expiry VARCHAR(10),
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

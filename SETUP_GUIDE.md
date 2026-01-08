@@ -148,6 +148,20 @@ SELECT * FROM orders;
 SELECT * FROM order_items;
 ```
 
+### How to access the database (local or Supabase)
+
+- Local Postgres: run `psql -U postgres -d cyberwait` (password from your `.env`) or use a GUI like DBeaver/pgAdmin and connect with the same credentials.
+- Supabase: open your project dashboard → **Table Editor** → pick `orders` to browse rows; or use the SQL editor.
+- From terminal, you can run: `psql <DATABASE_URL> -c "SELECT * FROM orders LIMIT 10;"` where `DATABASE_URL` is in your `.env`.
+
+### What is Docker used for in this project?
+
+- Docker can be used to run a local Postgres instance or run the whole stack in containers so your environment matches production.
+- Example: `docker run --name cyberwait-db -e POSTGRES_PASSWORD=yourpass -p 5432:5432 -d postgres` will start a Postgres DB the app can connect to using the `DATABASE_URL`.
+- Using Docker is optional but recommended if you want an isolated, reproducible dev environment.
+
+> **Security note:** Do NOT store CVV or full card numbers in your database. For production, integrate a PCI-compliant payment provider (like Stripe) — store only masked data (e.g., last 4 digits) and never CVV.
+
 ## 🐛 Troubleshooting
 
 ### "Cannot connect to database"
