@@ -18,7 +18,7 @@ Connecting frontend to a hosted backend & database (Vercel)
 - For persistence using Supabase, set the following Vercel environment variables:
   - `VITE_SUPABASE_URL` (public)
   - `VITE_SUPABASE_ANON_KEY` (public)
-  - `SUPABASE_SERVICE_ROLE` (server-only, required to write orders)
+  - `SUPABASE_SERVICE_ROLE_KEY` (server-only, required to write orders)
 - After setting env vars, redeploy (or trigger a new deployment) — the serverless endpoints will use Supabase when configured, otherwise will fall back to the built-in static menu and simulated orders.
 
 Deploying the backend & running migrations (Render example)

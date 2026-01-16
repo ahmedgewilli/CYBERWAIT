@@ -1,4 +1,6 @@
-import { createSupabaseServerClient } from './supabaseServer';
+import { createSupabaseServerClient } from './supabaseServer.js';
+
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();

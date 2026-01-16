@@ -127,10 +127,17 @@ Open another terminal window and run:
 
 ```bash
 cd CYBERWAIT
+npm install  # If you haven't already
 npm run dev
 ```
 
 The frontend will run on `http://localhost:3000` (or another port if 3000 is busy).
+
+Before starting the frontend, create `CYBERWAIT/.env.local` with:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
 
 ## 🧪 Testing the Setup
 
@@ -193,7 +200,7 @@ SELECT * FROM order_items;
 ### Frontend can't connect to API
 - Make sure backend server is running
 - Check CORS is enabled (it is in `server.js`)
-- Verify the API_URL in `index.tsx` matches your backend port
+- Verify `VITE_API_URL` in `CYBERWAIT/.env.local` matches your backend port
 
 ## 📁 Project Structure
 

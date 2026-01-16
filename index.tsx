@@ -99,6 +99,20 @@ const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLD
   </div>
 );
 
+const getApiBase = () => {
+  const raw = import.meta.env.VITE_API_URL;
+  if (!raw) return '';
+  if (typeof window === 'undefined') return raw.replace(/\/$/, '');
+
+  const allowCrossOrigin = import.meta.env.VITE_API_URL_ALLOW_CROSS_ORIGIN === 'true';
+  const resolved = new URL(raw, window.location.origin);
+  if (!allowCrossOrigin && resolved.origin !== window.location.origin) {
+    return '';
+  }
+
+  return `${resolved.origin}${resolved.pathname}`.replace(/\/$/, '');
+};
+
 // --- Page Views ---
 const LandingView = ({ onStart }: { onStart: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-6 py-12 animate-fade-in">
@@ -370,12 +384,12 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const pinchRef = useRef<{ distance: number; startZoom: number } | null>(null);
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = getApiBase();
     let timer: any;
     if (orderId && API_URL) {
       const poll = async () => {
         try {
-          const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/tracking/${orderId}/status`);
+          const res = await fetch(`${API_URL}/api/tracking/${orderId}/status`);
           if (!res.ok) return;
           const data = await res.json();
           const status = data.status || data?.status?.toLowerCase();
@@ -627,6 +641,7 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
 
 // --- Main App ---
 function App() {
+
   const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking'>('landing');
   const [cart, setCart] = useState(() => {
   const saved = localStorage.getItem('cyberwait_cart');
@@ -643,7 +658,7 @@ function App() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = getApiBase();
     const loadMenu = async () => {
       try {
         if (API_URL) {
@@ -720,7 +735,7 @@ function App() {
   }, [progress]);
 
   const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa', opts: any = {}) => {
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = getApiBase();
     const { card = {} } = opts;
 
     // Mask sensitive card info — DO NOT send CVV or full card number to server in production

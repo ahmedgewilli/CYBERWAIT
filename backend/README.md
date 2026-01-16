@@ -66,6 +66,16 @@ npm start
 
 The server will run on `http://localhost:5000` by default.
 
+## Connect the Frontend
+
+Create a `.env.local` file in the project root (`CYBERWAIT/`) with:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Then restart the frontend dev server so it picks up the env var.
+
 ## API Endpoints
 
 ### Menu
