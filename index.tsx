@@ -100,6 +100,10 @@ const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLD
 );
 
 const getApiBase = () => {
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+
   const raw = import.meta.env.VITE_API_URL;
   if (!raw) return '';
   if (typeof window === 'undefined') return raw.replace(/\/$/, '');
@@ -350,21 +354,6 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
                 <button onClick={() => onComplete(paymentMethod, { card: { cardName, cardNumber, cardExpiry, cardCCV } })} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
                 Pay & Confirm
               </button>
-
-              {/* DEV: client-side order test button — only rendered when parent passes onClientOrder */}
-              {typeof onComplete === 'function' && (onComplete as any) && (onComplete as any).name && false}
-              {typeof (onComplete as any) !== 'undefined' /* placeholder to keep TS happy */}
-              {typeof (onComplete as any) !== 'undefined' && (/* no-op for types */ null)}
-
-              {typeof ({} as any) /* keep linter quiet */ && null}
-
-              {typeof ({} as any) !== 'undefined' && null}
-
-              {typeof (window) !== 'undefined' && import.meta.env.DEV && (
-                <button onClick={() => onClientOrder && onClientOrder()} className="w-full mt-6 py-4 bg-white text-[#2D7D90] font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-md hover:scale-[1.02] active:scale-95 border border-zinc-100">
-                  Try client-side order (DEV)
-                </button>
-              )}
               </>
             )}
           </Card>
@@ -389,7 +378,8 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
     if (orderId && API_URL) {
       const poll = async () => {
         try {
-          const res = await fetch(`${API_URL}/api/tracking/${orderId}/status`);
+          const endpoint = import.meta.env.DEV ? `/api/tracking/${orderId}/status` : `${API_URL}/api/tracking/${orderId}/status`;
+          const res = await fetch(endpoint);
           if (!res.ok) return;
           const data = await res.json();
           const status = data.status || data?.status?.toLowerCase();
@@ -662,7 +652,8 @@ function App() {
     const loadMenu = async () => {
       try {
         if (API_URL) {
-          const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/menu`);
+          const endpoint = import.meta.env.DEV ? '/api/menu' : `${API_URL.replace(/\/$/, '')}/api/menu`;
+          const res = await fetch(endpoint);
           if (res.ok) {
             const data = await res.json();
             // If the API returns an empty array or items without required fields, fall back to the bundled seed
@@ -678,7 +669,8 @@ function App() {
 
           // If unauthorized or any failure, try the guaranteed public endpoint
           console.warn('Primary menu API failed, status:', res.status);
-          const fallback = await fetch(`${API_URL.replace(/\/$/, '')}/api/public-menu`);
+          const fallbackEndpoint = import.meta.env.DEV ? '/api/public-menu' : `${API_URL.replace(/\/$/, '')}/api/public-menu`;
+          const fallback = await fetch(fallbackEndpoint);
           if (fallback.ok) {
             const fallbackData = await fallback.json();
             setMenuItems(fallbackData as MenuItem[]);
@@ -745,7 +737,8 @@ function App() {
 
     try {
       if (API_URL) {
-        const res = await fetch(`${API_URL.replace(/\/$/, '')}/api/orders`, {
+        const endpoint = import.meta.env.DEV ? '/api/orders' : `${API_URL.replace(/\/$/, '')}/api/orders`;
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cart, paymentMethod, total: cartTotal, cardLast4, cardExpiry }),
