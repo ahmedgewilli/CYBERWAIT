@@ -20,11 +20,15 @@ export default async function handler(req, res) {
     // Insert order using service role key; store only masked card info (never store CVV)
     const insertPayload = { order_number: `ORD-${Date.now()}`, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' };
     const orderResult = await sb.from('orders').insert([insertPayload]).select();
+    if (orderResult.error) {
+      console.error('orders API: insert error', orderResult.error);
+      return res.status(200).json({ error: orderResult.error.message, persisted: false });
+    }
     const orderRow = orderResult.data?.[0] || orderResult[0] || null;
 
     if (!orderRow || !orderRow.id) {
       console.error('orders API: insert returned no row', orderResult);
-      return res.status(500).json({ error: 'no row returned from insert', persisted: false });
+      return res.status(200).json({ error: 'no row returned from insert', persisted: false });
     }
 
     const orderId = orderRow.id;
@@ -39,6 +43,6 @@ export default async function handler(req, res) {
     return res.status(201).json({ orderId, orderNumber: orderRow.order_number, status: 'pending', persisted: true, order: orderRow });
   } catch (err) {
     console.error('orders API error:', err);
-    return res.status(500).json({ error: String(err), persisted: false });
+    return res.status(200).json({ error: String(err), persisted: false });
   }
 }

@@ -101,7 +101,8 @@ const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLD
 
 const getApiBase = () => {
   if (import.meta.env.PROD) {
-    return '/api';
+    if (typeof window === 'undefined') return '';
+    return window.location.origin;
   }
 
   const raw = import.meta.env.VITE_API_URL;
@@ -852,6 +853,7 @@ function App() {
             progress={progress} 
             setProgress={setProgress}
             onNewOrder={handleNewOrderStart}
+            orderId={currentOrderId}
           />
         )}
       </main>
