@@ -99,25 +99,6 @@ const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLD
   </div>
 );
 
-const getApiBase = () => {
-  if (import.meta.env.PROD) {
-    if (typeof window === 'undefined') return '';
-    return window.location.origin;
-  }
-
-  const raw = import.meta.env.VITE_API_URL;
-  if (!raw) return '';
-  if (typeof window === 'undefined') return raw.replace(/\/$/, '');
-
-  const allowCrossOrigin = import.meta.env.VITE_API_URL_ALLOW_CROSS_ORIGIN === 'true';
-  const resolved = new URL(raw, window.location.origin);
-  if (!allowCrossOrigin && resolved.origin !== window.location.origin) {
-    return '';
-  }
-
-  return `${resolved.origin}${resolved.pathname}`.replace(/\/$/, '');
-};
-
 // --- Page Views ---
 const LandingView = ({ onStart }: { onStart: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-6 py-12 animate-fade-in">
@@ -169,29 +150,31 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-        {filteredItems.map(item => (
-          <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
-            <div className="h-64 overflow-hidden relative">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-              <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
-                ${item.price.toFixed(2)}
+      <div className="max-h-[70vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+          {filteredItems.map(item => (
+            <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
+              <div className="h-64 overflow-hidden relative">
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
+                  ${item.price.toFixed(2)}
+                </div>
               </div>
-            </div>
-            <div className="p-8 flex flex-col flex-grow">
-              <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
-              <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
-              {!isOrderActive && (
-                <button 
-                  onClick={() => onAddToCart(item)}
-                  className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
-                >
-                  <CartIcon /> Add to Cart
-                </button>
-              )}
-            </div>
-          </Card>
-        ))}
+              <div className="p-8 flex flex-col flex-grow">
+                <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
+                <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
+                {!isOrderActive && (
+                  <button 
+                    onClick={() => onAddToCart(item)}
+                    className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
+                  >
+                    <CartIcon /> Add to Cart
+                  </button>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {cartCount > 0 && !isOrderActive && (
@@ -374,12 +357,11 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
   const pinchRef = useRef<{ distance: number; startZoom: number } | null>(null);
 
   useEffect(() => {
-    const API_URL = getApiBase();
     let timer: any;
-    if (orderId && API_URL) {
+    if (orderId) {
       const poll = async () => {
         try {
-          const endpoint = import.meta.env.DEV ? `/api/tracking/${orderId}/status` : `${API_URL}/api/tracking/${orderId}/status`;
+          const endpoint = `/api/tracking/${orderId}/status`;
           const res = await fetch(endpoint);
           if (!res.ok) return;
           const data = await res.json();
@@ -649,38 +631,32 @@ function App() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
 
   useEffect(() => {
-    const API_URL = getApiBase();
     const loadMenu = async () => {
       try {
-        if (API_URL) {
-          const endpoint = import.meta.env.DEV ? '/api/menu' : `${API_URL.replace(/\/$/, '')}/api/menu`;
-          const res = await fetch(endpoint);
-          if (res.ok) {
-            const data = await res.json();
-            // If the API returns an empty array or items without required fields, fall back to the bundled seed
-            const valid = Array.isArray(data) ? data.filter((it: any) => it && it.name && (it.price !== null && it.price !== undefined) && it.description && it.image && it.category) : [];
-            if (valid.length > 0) {
-              setMenuItems(valid as MenuItem[]);
-            } else {
-              console.warn('Primary menu API returned empty/invalid items — falling back to bundled MENU_ITEMS');
-              setMenuItems(MENU_ITEMS);
-            }
-            return;
+        const res = await fetch('/api/menu');
+        if (res.ok) {
+          const data = await res.json();
+          // If the API returns an empty array or items without required fields, fall back to the bundled seed
+          const valid = Array.isArray(data) ? data.filter((it: any) => it && it.name && (it.price !== null && it.price !== undefined) && it.description && it.image && it.category) : [];
+          if (valid.length > 0) {
+            setMenuItems(valid as MenuItem[]);
+          } else {
+            console.warn('Primary menu API returned empty/invalid items — falling back to bundled MENU_ITEMS');
+            setMenuItems(MENU_ITEMS);
           }
-
-          // If unauthorized or any failure, try the guaranteed public endpoint
-          console.warn('Primary menu API failed, status:', res.status);
-          const fallbackEndpoint = import.meta.env.DEV ? '/api/public-menu' : `${API_URL.replace(/\/$/, '')}/api/public-menu`;
-          const fallback = await fetch(fallbackEndpoint);
-          if (fallback.ok) {
-            const fallbackData = await fallback.json();
-            setMenuItems(fallbackData as MenuItem[]);
-            return;
-          }
-
-          // If both fail, continue to Supabase client fallback below
+          return;
         }
 
+        // If unauthorized or any failure, try the guaranteed public endpoint
+        console.warn('Primary menu API failed, status:', res.status);
+        const fallback = await fetch('/api/public-menu');
+        if (fallback.ok) {
+          const fallbackData = await fallback.json();
+          setMenuItems(fallbackData as MenuItem[]);
+          return;
+        }
+
+        // If both fail, continue to Supabase client fallback below
         const { data, error } = await supabase.from('menu').select('*').order('id');
         if (error) {
           console.warn('Supabase load menu error:', error);
@@ -728,7 +704,6 @@ function App() {
   }, [progress]);
 
   const handlePlaceOrder = async (paymentMethod: 'visa' | 'apple' | 'cash' = 'visa', opts: any = {}) => {
-    const API_URL = getApiBase();
     const { card = {} } = opts;
 
     // Mask sensitive card info — DO NOT send CVV or full card number to server in production
@@ -737,24 +712,19 @@ function App() {
     const cardExpiry = card.cardExpiry || null;
 
     try {
-      if (API_URL) {
-        const endpoint = import.meta.env.DEV ? '/api/orders' : `${API_URL.replace(/\/$/, '')}/api/orders`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cart, paymentMethod, total: cartTotal, cardLast4, cardExpiry }),
-        });
-        if (!res.ok) throw new Error(`Order API error: ${res.status}`);
-        const body = await res.json();
-        const orderId = body.orderId || body.id || body.order_id;
-        setCurrentOrderId(orderId ?? null);
-      } else {
-        // Fallback: simulate order id
-        const orderId = Math.floor(Math.random() * 1000000);
-        setCurrentOrderId(orderId);
-      }
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart, paymentMethod, total: cartTotal, cardLast4, cardExpiry }),
+      });
+      if (!res.ok) throw new Error(`Order API error: ${res.status}`);
+      const body = await res.json();
+      const orderId = body.orderId || body.id || body.order_id;
+      setCurrentOrderId(orderId ?? null);
     } catch (err) {
       console.error('Place order error:', err);
+      const orderId = Math.floor(Math.random() * 1000000);
+      setCurrentOrderId(orderId);
     } finally {
       setIsOrderActive(true);
       setProgress(0);

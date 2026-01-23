@@ -1,48 +1,128 @@
-import { createSupabaseServerClient } from './supabaseServer.js';
+import { createSupabaseServerClient } from './supabaseServer.js'; 
 
 export const config = { runtime: 'nodejs' };
 
+function makeRequestId() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  if (uuid) return uuid;
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isValidCartItem(entry) {
+  if (!entry || typeof entry !== 'object') return false;
+
+  const item = entry.item;
+  const qty = entry.quantity;
+
+  if (!item || typeof item !== 'object') return false;
+  if (item.id === undefined || item.id === null) return false;
+
+  const price = Number(item.price);
+  if (!Number.isFinite(price) || price < 0) return false;
+
+  if (!Number.isFinite(qty) || qty <= 0) return false;
+
+  return true;
+}
+
 export default async function handler(req, res) {
+  // Allow preflight
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { cart = [], paymentMethod = 'visa', total = 0, cardLast4 = null, cardExpiry = null } = req.body || {};
-  const sb = createSupabaseServerClient();
-
-  if (!sb) {
-    // No DB available — create a simple in-memory simulation response
-    console.warn('supabase client not configured on server - running in simulation mode');
-    const orderId = Math.floor(Math.random() * 1000000);
-    return res.status(201).json({ orderId, orderNumber: `ORD-${Date.now()}`, status: 'pending', persisted: false, simulated: true });
-  }
+  const requestId = makeRequestId();
 
   try {
-    // Insert order using service role key; store only masked card info (never store CVV)
-    const insertPayload = { order_number: `ORD-${Date.now()}`, total, payment_method: paymentMethod, card_last4: cardLast4, card_expiry: cardExpiry, status: 'pending' };
-    const orderResult = await sb.from('orders').insert([insertPayload]).select();
-    if (orderResult.error) {
-      console.error('orders API: insert error', orderResult.error);
-      return res.status(200).json({ error: orderResult.error.message, persisted: false });
-    }
-    const orderRow = orderResult.data?.[0] || orderResult[0] || null;
+    const body = req.body || {};
+    const cart = body.cart ?? [];
+    const paymentMethod = body.paymentMethod ?? 'visa';
+    const cardLast4 = body.cardLast4 ?? null;
+    const cardExpiry = body.cardExpiry ?? null;
 
-    if (!orderRow || !orderRow.id) {
-      console.error('orders API: insert returned no row', orderResult);
-      return res.status(200).json({ error: 'no row returned from insert', persisted: false });
+    // Never accept/store CVV
+    // If frontend sends it by mistake, we ignore it.
+
+    if (!Array.isArray(cart)) {
+      return res.status(400).json({ error: 'cart must be an array', persisted: false, requestId });
+    }
+    if (!cart.every(isValidCartItem)) {
+      return res.status(400).json({ error: 'invalid cart item', persisted: false, requestId });
     }
 
-    const orderId = orderRow.id;
+    // Compute total on server (don’t trust client total)
+    const computedTotal = cart.reduce((sum, row) => {
+      return sum + Number(row.item.price) * Number(row.quantity);
+    }, 0);
+
+    const sb = createSupabaseServerClient();
+    if (!sb) {
+      console.warn(`[${requestId}] Supabase server client not configured (simulation mode)`);
+      const orderNumber = `ORD-${Date.now()}`;
+      return res.status(201).json({
+        orderId: Math.floor(Math.random() * 1000000),
+        orderNumber,
+        status: 'pending',
+        persisted: false,
+        simulated: true,
+        requestId,
+      });
+    }
+
+    const orderNumber = `ORD-${Date.now()}`;
+
+    // Insert order and return inserted row
+    const { data: orderData, error: orderError } = await sb
+      .from('orders')
+      .insert([
+        {
+          order_number: orderNumber,
+          total: computedTotal,
+          payment_method: paymentMethod,
+          card_last4: cardLast4,
+          card_expiry: cardExpiry,
+          status: 'pending',
+        },
+      ])
+      .select('id, order_number, status')
+      .single();
+
+    if (orderError) {
+      console.error(`[${requestId}] orders insert error`, orderError);
+      return res.status(500).json({ error: orderError.message, persisted: false, requestId });
+    }
+
+    const orderId = orderData?.id;
+    if (!orderId) {
+      console.error(`[${requestId}] orders insert returned no id`, orderData);
+      return res.status(500).json({ error: 'Order insert returned no id', persisted: false, requestId });
+    }
 
     // Insert order items
-    if (Array.isArray(cart) && cart.length && orderId) {
-      const items = cart.map(item => ({ order_id: orderId, menu_item_id: item.item.id, quantity: item.quantity, price: item.item.price }));
-      await sb.from('order_items').insert(items);
+    if (cart.length) {
+      const items = cart.map((row) => ({
+        order_id: orderId,
+        product_id: row.item.id,
+        quantity: row.quantity,
+        price: Number(row.item.price),
+      }));
+
+      const { error: itemsError } = await sb.from('order_items').insert(items);
+
+      if (itemsError) {
+        console.error(`[${requestId}] order_items insert error`, itemsError);
+        return res.status(500).json({ error: itemsError.message, persisted: false, requestId });
+      }
     }
 
-    console.log('orders API: persisted order id', orderId);
-    return res.status(201).json({ orderId, orderNumber: orderRow.order_number, status: 'pending', persisted: true, order: orderRow });
+    return res.status(201).json({
+      orderId,
+      orderNumber: orderData.order_number,
+      status: orderData.status ?? 'pending',
+      persisted: true,
+      requestId,
+    });
   } catch (err) {
-    console.error('orders API error:', err);
-    return res.status(200).json({ error: String(err), persisted: false });
+    console.error(`[${requestId}] orders API exception`, err);
+    return res.status(500).json({ error: 'Internal error', detail: String(err), persisted: false, requestId });
   }
 }

@@ -18,3 +18,23 @@ View your app in AI Studio: https://ai.studio/apps/drive/1z1yTrggCr78AQ-8O8-zLD5
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Production environment variables (Vercel)
+
+Set these in Vercel project settings:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_ANON_KEY` (optional fallback)
+
+Never expose the service role key in client code. It must only be used in server-side environments such as Vercel serverless functions.
+
+## Deployment (Vercel)
+
+This app is deployed on Vercel using serverless functions in `/api` and a SPA fallback to `index.html`. There is no separate backend service to run.
+
+## Local API proxy (optional)
+
+By default, the app calls `/api/*` directly (for Vercel serverless functions). If you want Vite to proxy `/api` to a local backend on port 5000 during development, set:
+
+- `VITE_USE_LOCAL_API_PROXY=true`
