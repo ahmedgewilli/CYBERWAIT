@@ -101,7 +101,7 @@ export default async function handler(req, res) {
     if (cart.length) {
       const items = cart.map((row) => ({
         order_id: orderId,
-        menu_item_id: row.item.id,
+        product_id: row.item.id,
         quantity: row.quantity,
         price: Number(row.item.price),
       }));
