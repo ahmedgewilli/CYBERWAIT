@@ -1,24 +1,54 @@
 import { createClient } from '@supabase/supabase-js';
 
+/** Extract the Supabase project ref from a project URL, e.g. "aihdlaiku..." */
+function getUrlRef(url) {
+  return url?.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] ?? null;
+}
+
+/** Extract the project ref embedded in a Supabase JWT payload */
+function getJwtRef(token) {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split('.')[1], 'base64').toString('utf8')
+    );
+    return payload.ref ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function createSupabaseServerClient() {
-  // Prefer non-VITE_ server-side vars — they share the same project as SUPABASE_SERVICE_ROLE_KEY.
-  // VITE_ vars are browser-only and may point to a different Supabase project.
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // VITE_SUPABASE_URL is the active/live project — prefer it first.
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anon = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url) {
-    console.warn('createSupabaseServerClient: SUPABASE URL is not set (VITE_SUPABASE_URL / SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL)');
+    console.warn('createSupabaseServerClient: No Supabase URL found in env vars.');
     return null;
   }
 
-  // Prefer service role key when doing writes from the server
-  if (!serviceRole) {
-    console.warn('createSupabaseServerClient: SUPABASE_SERVICE_ROLE not set — server will use anon key and may be blocked by RLS for writes');
-  } else {
-    console.log('createSupabaseServerClient: using SUPABASE_SERVICE_ROLE for server operations');
+  // Validate that the service role key actually belongs to the same project as the URL.
+  // Keys from a deleted/old project will cause ENOTFOUND or "Invalid API key" errors.
+  let validatedServiceRole = null;
+  if (serviceRole) {
+    const urlRef = getUrlRef(url);
+    const keyRef = getJwtRef(serviceRole);
+    if (urlRef && keyRef && urlRef === keyRef) {
+      validatedServiceRole = serviceRole;
+      console.log(`createSupabaseServerClient: using service role key for project '${urlRef}'`);
+    } else {
+      console.warn(
+        `createSupabaseServerClient: SUPABASE_SERVICE_ROLE_KEY is for project '${keyRef}' ` +
+        `but URL points to '${urlRef}' — ignoring mismatched key, falling back to anon.`
+      );
+    }
   }
 
-  const key = serviceRole || anon;
+  if (!validatedServiceRole) {
+    console.warn('createSupabaseServerClient: using anon key — writes may be blocked by RLS.');
+  }
+
+  const key = validatedServiceRole || anon;
   return createClient(url, key, { auth: { persistSession: false } });
 }
