@@ -1,5 +1,8 @@
-
 /* index.css - Immersive Presentation Redesign */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
 
@@ -23,7 +26,9 @@ html, body {
     font-family: var(--font-sans);
     background-color: var(--app-bg);
     color: var(--text-primary);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 #root {

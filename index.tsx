@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { supabase } from './src/supabase';
+import './index.css';
 
 // --- Types & Data ---
 interface MenuItem {
@@ -150,31 +151,29 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive
         </div>
       </div>
       
-      <div className="max-h-[70vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-          {filteredItems.map(item => (
-            <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
-              <div className="h-64 overflow-hidden relative">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
-                  ${item.price.toFixed(2)}
-                </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        {filteredItems.map(item => (
+          <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
+            <div className="h-64 overflow-hidden relative">
+              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+              <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
+                ${item.price.toFixed(2)}
               </div>
-              <div className="p-8 flex flex-col flex-grow">
-                <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
-                <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
-                {!isOrderActive && (
-                  <button 
-                    onClick={() => onAddToCart(item)}
-                    className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
-                  >
-                    <CartIcon /> Add to Cart
-                  </button>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+            </div>
+            <div className="p-8 flex flex-col flex-grow">
+              <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
+              <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
+              {!isOrderActive && (
+                <button 
+                  onClick={() => onAddToCart(item)}
+                  className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
+                >
+                  <CartIcon /> Add to Cart
+                </button>
+              )}
+            </div>
+          </Card>
+        ))}
       </div>
 
       {cartCount > 0 && !isOrderActive && (
@@ -723,7 +722,9 @@ function App() {
       setCurrentOrderId(orderId ?? null);
     } catch (err) {
       console.error('Place order error:', err);
-      const orderId = Math.floor(Math.random() * 1000000);
+      // Fallback to client-side insert if local API is not running
+      const order = await placeOrder(cart, cartTotal);
+      const orderId = order ? order.id : Math.floor(Math.random() * 1000000);
       setCurrentOrderId(orderId);
     } finally {
       setIsOrderActive(true);
