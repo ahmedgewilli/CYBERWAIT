@@ -766,7 +766,6 @@ function App() {
       const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
       if (itemsError) console.error('placeOrder (items) error:', itemsError);
 
-      alert('Order placed (client) — check Supabase if inserts succeeded');
       return order;
     } catch (err) {
       console.error('placeOrder unexpected error:', err);
