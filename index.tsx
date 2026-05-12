@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { supabase } from './src/supabase';
+import './index.css';
 
 // --- Types & Data ---
 interface MenuItem {
@@ -34,11 +35,11 @@ const MENU_ITEMS: MenuItem[] = [
 // --- Icons ---
 const CyberWaitLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M12 2L4 10V14L12 22L20 14V10L12 2Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-    <path d="M8 11C8 11 9 10 10 10C11 10 11 11 11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M13 11C13 11 14 10 15 10C16 10 16 11 16 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M10 15C10.5 15.5 11.2 16 12 16C12.8 16 13.5 15.5 14 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    <path d="M12 2L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M12 2L4 10V14L12 22L20 14V10L12 2Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    <path d="M8 11C8 11 9 10 10 10C11 10 11 11 11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M13 11C13 11 14 10 15 10C16 10 16 11 16 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M10 15C10.5 15.5 11.2 16 12 16C12.8 16 13.5 15.5 14 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M12 2L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     <circle cx="12" cy="2" r="1.5" fill="#f43f5e" />
   </svg>
 );
@@ -46,52 +47,52 @@ const CyberWaitLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
 const CuteRobotIcon = ({ className = "w-12 h-12", mood = 0 }: { className?: string; mood?: number }) => {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M5 10C5 7.23858 7.23858 5 10 5H14C16.7614 5 19 7.23858 19 10V15C19 17.7614 16.7614 20 14 20H10C7.23858 20 5 17.7614 5 15V10Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2"/>
+      <path d="M5 10C5 7.23858 7.23858 5 10 5H14C16.7614 5 19 7.23858 19 10V15C19 17.7614 16.7614 20 14 20H10C7.23858 20 5 17.7614 5 15V10Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
       {mood === 0 && (
-        <><rect x="8" y="11.5" width="2" height="1" rx="0.5" fill="currentColor"/><rect x="14" y="11.5" width="2" height="1" rx="0.5" fill="currentColor"/></>
+        <><rect x="8" y="11.5" width="2" height="1" rx="0.5" fill="currentColor" /><rect x="14" y="11.5" width="2" height="1" rx="0.5" fill="currentColor" /></>
       )}
       {mood === 1 && (
-        <><path d="M8 13C8 13 8.5 11 9.5 11C10.5 11 11 13 11 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M13 13C13 13 13.5 11 14.5 11C15.5 11 16 13 16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
+        <><path d="M8 13C8 13 8.5 11 9.5 11C10.5 11 11 13 11 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M13 13C13 13 13.5 11 14.5 11C15.5 11 16 13 16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>
       )}
       {mood === 2 && (
-        <><path d="M8 11L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 11L8 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M14 11L16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M16 11L14 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></>
+        <><path d="M8 11L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M10 11L8 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M14 11L16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M16 11L14 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>
       )}
       {mood === 3 && (
-        <><path d="M7.5 12.5L9.5 10.5L11.5 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M12.5 12.5L14.5 10.5L16.5 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></>
+        <><path d="M7.5 12.5L9.5 10.5L11.5 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M12.5 12.5L14.5 10.5L16.5 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>
       )}
-      {mood === 0 && <rect x="10.5" y="16" width="3" height="1.5" rx="0.75" fill="currentColor"/>}
-      {mood === 1 && <path d="M10 16C10.5 16.5 11.2 17 12 17C12.8 17 13.5 16.5 14 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>}
-      {mood === 2 && <path d="M10 18C10.5 17.5 11.2 17 12 17C12.8 17 13.5 17.5 14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>}
-      {mood === 3 && <path d="M9 16C9 17.6569 10.3431 19 12 19C13.6569 19 15 17.6569 15 16" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.5"/>}
-      <path d="M12 5V2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-      <circle cx="12" cy="2" r="1.5" fill={mood === 2 ? "#fbbf24" : mood === 3 ? "#10b981" : "#f43f5e"} className={mood === 2 ? "animate-pulse" : ""}/>
+      {mood === 0 && <rect x="10.5" y="16" width="3" height="1.5" rx="0.75" fill="currentColor" />}
+      {mood === 1 && <path d="M10 16C10.5 16.5 11.2 17 12 17C12.8 17 13.5 16.5 14 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />}
+      {mood === 2 && <path d="M10 18C10.5 17.5 11.2 17 12 17C12.8 17 13.5 17.5 14 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />}
+      {mood === 3 && <path d="M9 16C9 17.6569 10.3431 19 12 19C13.6569 19 15 17.6569 15 16" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.5" />}
+      <path d="M12 5V2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="12" cy="2" r="1.5" fill={mood === 2 ? "#fbbf24" : mood === 3 ? "#10b981" : "#f43f5e"} className={mood === 2 ? "animate-pulse" : ""} />
     </svg>
   );
 };
 
 const CartIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></svg>
 );
 
 const ApplePayIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.96.95-2.05 1.72-3.3 1.72-1.2 0-1.6-.74-3.04-.74-1.45 0-1.9.72-3.04.74-1.23 0-2.45-.85-3.48-2.12-2.12-2.62-1.63-7.1 1.05-9.8 1.34-1.33 3.03-2.13 4.57-2.13 1.16 0 2.26.44 2.97.44.7 0 1.8-.44 3.03-.44 1.13 0 2.5.58 3.52 1.63-2.22 1.56-1.85 4.86.37 6.4-.9 1.5-1.9 3.14-2.65 4.04zm-4.72-16.1c0-1.6 1.32-2.9 2.93-2.9.15 0 .3 0 .44.03-.13 1.63-1.46 2.9-2.93 2.9-.17 0-.3 0-.44-.03z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.96.95-2.05 1.72-3.3 1.72-1.2 0-1.6-.74-3.04-.74-1.45 0-1.9.72-3.04.74-1.23 0-2.45-.85-3.48-2.12-2.12-2.62-1.63-7.1 1.05-9.8 1.34-1.33 3.03-2.13 4.57-2.13 1.16 0 2.26.44 2.97.44.7 0 1.8-.44 3.03-.44 1.13 0 2.5.58 3.52 1.63-2.22 1.56-1.85 4.86.37 6.4-.9 1.5-1.9 3.14-2.65 4.04zm-4.72-16.1c0-1.6 1.32-2.9 2.93-2.9.15 0 .3 0 .44.03-.13 1.63-1.46 2.9-2.93 2.9-.17 0-.3 0-.44-.03z" /></svg>
 );
 
 const CashIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></svg>
 );
 
 const MinusIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12" /></svg>
 );
 
 const PlusIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
 );
 
 // --- UI Sub-Components ---
 const Card = ({ children, className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div 
+  <div
     className={`bg-white border border-zinc-200 rounded-[2.5rem] p-6 shadow-sm hover:shadow-xl transition-all duration-300 ${className}`}
     {...props}
   >
@@ -109,7 +110,7 @@ const LandingView = ({ onStart }: { onStart: () => void }) => (
       </div>
     </div>
     <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-tight text-zinc-900">
-      HAPPY<br/><span className="text-cyan-600">DINING.</span>
+      HAPPY<br /><span className="text-cyan-600">DINING.</span>
     </h1>
     <p className="text-zinc-500 text-lg md:text-xl max-w-lg mb-12 leading-relaxed font-medium">
       Your friendly digital dining companion. Experience fresh meals with the magic of automated service.
@@ -124,7 +125,7 @@ const LandingView = ({ onStart }: { onStart: () => void }) => (
 
 const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive, menuItems }: any) => {
   const [activeCategory, setActiveCategory] = useState('All Items');
-  
+
   const filteredItems = useMemo(() => {
     if (activeCategory === 'All Items') return menuItems;
     return menuItems.filter((item: MenuItem) => item.category === activeCategory);
@@ -139,8 +140,8 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive
         </div>
         <div className="flex gap-3 overflow-x-auto pb-4 w-full lg:w-auto -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar items-center">
           {['All Items', 'Meals', 'Drinks', 'Desserts'].map((cat) => (
-            <button 
-              key={cat} 
+            <button
+              key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-10 py-3.5 rounded-full text-[10px] font-black tracking-widest uppercase transition-all border-2 ${activeCategory === cat ? 'bg-zinc-900 text-white border-zinc-900 shadow-xl scale-105' : 'bg-white border-zinc-100 text-zinc-400 hover:text-zinc-900 hover:border-zinc-300'}`}
             >
@@ -149,37 +150,35 @@ const MenuView = ({ onAddToCart, onCheckout, cartCount, cartTotal, isOrderActive
           ))}
         </div>
       </div>
-      
-      <div className="max-h-[70vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-          {filteredItems.map(item => (
-            <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
-              <div className="h-64 overflow-hidden relative">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
-                  ${item.price.toFixed(2)}
-                </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        {filteredItems.map(item => (
+          <Card key={item.id} className="group p-0 overflow-hidden flex flex-col border-0 bg-white ring-1 ring-zinc-100 shadow-xl hover:shadow-2xl hover:-translate-y-2">
+            <div className="h-64 overflow-hidden relative">
+              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+              <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-xl px-5 py-2 rounded-full text-xs font-black text-cyan-600 shadow-lg border border-white/50 ring-1 ring-zinc-900/5">
+                ${item.price.toFixed(2)}
               </div>
-              <div className="p-8 flex flex-col flex-grow">
-                <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
-                <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
-                {!isOrderActive && (
-                  <button 
-                    onClick={() => onAddToCart(item)}
-                    className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
-                  >
-                    <CartIcon /> Add to Cart
-                  </button>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+            </div>
+            <div className="p-8 flex flex-col flex-grow">
+              <h3 className="text-2xl font-black mb-2 text-zinc-900 group-hover:text-cyan-600 transition-colors uppercase tracking-tight italic">{item.name}</h3>
+              <p className="text-zinc-500 text-sm mb-10 h-12 line-clamp-2 leading-relaxed flex-grow font-medium">{item.description}</p>
+              {!isOrderActive && (
+                <button
+                  onClick={() => onAddToCart(item)}
+                  className="w-full py-5 bg-zinc-50 border border-zinc-200 text-zinc-900 active:bg-[#2D7D90] active:text-white active:border-[#2D7D90] font-black uppercase text-[11px] tracking-[0.2em] rounded-[2rem] transition-colors duration-100 flex items-center justify-center gap-3 shadow-sm"
+                >
+                  <CartIcon /> Add to Cart
+                </button>
+              )}
+            </div>
+          </Card>
+        ))}
       </div>
 
       {cartCount > 0 && !isOrderActive && (
         <div className="fixed bottom-10 left-0 right-0 px-6 z-[120] animate-slide-up flex justify-center pointer-events-none">
-          <button 
+          <button
             onClick={onCheckout}
             className="w-full max-w-xl py-6 bg-[#121212] text-white rounded-full shadow-[0_30px_70px_rgba(0,0,0,0.6)] flex items-center justify-between px-6 sm:px-10 hover:scale-[1.02] transition-transform active:scale-95 border border-zinc-800 pointer-events-auto ring-4 ring-white/10"
           >
@@ -209,9 +208,9 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 animate-slide-up pb-40">
       <button onClick={onBack} className="mb-8 text-zinc-400 hover:text-zinc-900 flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] transition-all group">
-         <span className="group-hover:-translate-x-2 transition-transform inline-block text-lg">←</span> Back to Menu
+        <span className="group-hover:-translate-x-2 transition-transform inline-block text-lg">←</span> Back to Menu
       </button>
-      
+
       {cart.length === 0 ? (
         <div className="flex flex-col items-center">
           <Card className="w-full ring-1 ring-zinc-100 mb-10">
@@ -229,15 +228,15 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
         <div className="grid grid-cols-1 gap-8">
           <Card className="ring-1 ring-zinc-100 overflow-hidden p-0">
             <div className="py-8 sm:py-10 pl-4 sm:pl-6 pr-8 border-b border-zinc-50 flex flex-row items-center gap-8 sm:gap-14">
-               <h2 className="text-2xl sm:text-3xl font-black tracking-tighter italic text-zinc-900 uppercase whitespace-nowrap">YOUR BASKET</h2>
-               {!isOrderActive && (
-                 <button 
-                   onClick={clearCart} 
-                   className="text-[10px] font-black uppercase tracking-wider text-rose-500 bg-rose-50 px-5 py-2.5 rounded-full border border-rose-100 hover:bg-rose-100 transition-all active:scale-95 shadow-sm whitespace-nowrap"
-                 >
-                   CLEAR ALL
-                 </button>
-               )}
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tighter italic text-zinc-900 uppercase whitespace-nowrap">YOUR BASKET</h2>
+              {!isOrderActive && (
+                <button
+                  onClick={clearCart}
+                  className="text-[10px] font-black uppercase tracking-wider text-rose-500 bg-rose-50 px-5 py-2.5 rounded-full border border-rose-100 hover:bg-rose-100 transition-all active:scale-95 shadow-sm whitespace-nowrap"
+                >
+                  CLEAR ALL
+                </button>
+              )}
             </div>
             <div className="space-y-4 max-h-[700px] overflow-y-auto px-4 sm:px-10 py-6 no-scrollbar">
               {cart.map((cartItem: CartItem) => (
@@ -245,32 +244,32 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
                   <div className="flex-1 flex flex-col items-start min-w-0">
                     <h4 className="font-black text-base sm:text-xl text-zinc-900 leading-tight italic uppercase whitespace-nowrap overflow-hidden text-ellipsis w-full">{cartItem.item.name}</h4>
                     <div className="mt-4">
-                        <span className="text-2xl font-black text-zinc-900 tracking-tighter italic">
-                            ${(cartItem.item.price * cartItem.quantity).toFixed(2)}
-                        </span>
+                      <span className="text-2xl font-black text-zinc-900 tracking-tighter italic">
+                        ${(cartItem.item.price * cartItem.quantity).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                   <div className="relative shrink-0 w-32 h-32 sm:w-44 sm:h-44">
-                    <img 
-                      src={cartItem.item.image} 
-                      className="w-full h-full rounded-[2.5rem] sm:rounded-[3.5rem] object-cover shadow-xl border-4 border-white ring-1 ring-zinc-100" 
-                      alt={cartItem.item.name} 
+                    <img
+                      src={cartItem.item.image}
+                      className="w-full h-full rounded-[2.5rem] sm:rounded-[3.5rem] object-cover shadow-xl border-4 border-white ring-1 ring-zinc-100"
+                      alt={cartItem.item.name}
                     />
                     {!isOrderActive && (
                       <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white rounded-full px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-zinc-100 whitespace-nowrap min-w-[120px] justify-between z-10">
-                          <button 
-                            onClick={() => updateCart(cartItem.item.id, -1)} 
-                            className="text-[#f43f5e] hover:scale-110 transition-transform p-1"
-                          >
-                              <MinusIcon />
-                          </button>
-                          <span className="font-black text-lg text-zinc-900 select-none">{cartItem.quantity}</span>
-                          <button 
-                            onClick={() => updateCart(cartItem.item.id, 1)} 
-                            className="text-[#2D7D90] hover:scale-110 transition-transform p-1"
-                          >
-                              <PlusIcon />
-                          </button>
+                        <button
+                          onClick={() => updateCart(cartItem.item.id, -1)}
+                          className="text-[#f43f5e] hover:scale-110 transition-transform p-1"
+                        >
+                          <MinusIcon />
+                        </button>
+                        <span className="font-black text-lg text-zinc-900 select-none">{cartItem.quantity}</span>
+                        <button
+                          onClick={() => updateCart(cartItem.item.id, 1)}
+                          className="text-[#2D7D90] hover:scale-110 transition-transform p-1"
+                        >
+                          <PlusIcon />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -334,10 +333,10 @@ const CheckoutView = ({ cart, updateCart, clearCart, onComplete, onBack, isOrder
               <div className="flex justify-between items-center pt-8 border-t border-zinc-100"><span className="text-2xl font-black italic uppercase text-zinc-900">Pay Now</span><span className="text-5xl font-black text-zinc-900 tracking-tighter">${cartTotal.toFixed(2)}</span></div>
             </div>
             {!isOrderActive && (
-                <>
+              <>
                 <button onClick={() => onComplete(paymentMethod, { card: { cardName, cardNumber, cardExpiry, cardCCV } })} className="w-full mt-12 py-7 bg-zinc-900 text-white font-black uppercase text-xs tracking-[0.4em] rounded-[2.5rem] transition-all shadow-2xl hover:scale-[1.02] active:scale-95">
-                Pay & Confirm
-              </button>
+                  Pay & Confirm
+                </button>
               </>
             )}
           </Card>
@@ -567,24 +566,24 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
         {/* Robot Mode removed — using Robot Mood panel above Service Log instead */}
 
         <Card className="bg-white border-zinc-100 shadow-xl">           <div className="flex justify-between items-center mb-10">
-             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
-             <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
-           </div>
-           <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
-              <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
-              <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
-              {progress === 4 && (
-                <div className="mt-6 w-full">
-                  <button onClick={() => onNewOrder?.()} className="w-full md:w-auto bg-[#2D7D90] text-white font-black py-3 px-6 rounded-xl hover:opacity-95">Start New Order</button>
-                </div>
-              )}
-           </div>
-           <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
-              <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>
-              <div className="flex gap-2">
-                 {[1,2,3,4,5,6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
+          <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2D7D90]">ROBOT MOOD</h4>
+          <div className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Live</div>
+        </div>
+          <div className="bg-[#f4f7f8] p-10 rounded-[3rem] border border-zinc-100 flex flex-col items-center text-center shadow-inner">
+            <div className="mb-8 animate-bounce text-[#2D7D90]"><CuteRobotIcon className="w-24 h-24" mood={progress > 3 ? 3 : progress} /></div>
+            <p className={`text-lg font-black uppercase tracking-tight leading-tight italic ${robotMood.color}`}>{robotMood.msg}</p>
+            {progress === 4 && (
+              <div className="mt-6 w-full">
+                <button onClick={() => onNewOrder?.()} className="w-full md:w-auto bg-[#2D7D90] text-white font-black py-3 px-6 rounded-xl hover:opacity-95">Start New Order</button>
               </div>
-           </div>
+            )}
+          </div>
+          <div className="mt-10 pt-10 border-t border-zinc-100 flex justify-between items-center">
+            <div className="text-[10px] font-black text-zinc-400 tracking-[0.3em]">ROBOT STAMINA</div>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5, 6].map(b => <div key={b} className={`w-4 h-2 rounded-sm ${b < 6 ? 'bg-emerald-500' : 'bg-zinc-200'}`}></div>)}
+            </div>
+          </div>
         </Card>
 
         <Card className="bg-white border-zinc-100 shadow-xl">          <h3 className="text-[12px] font-black mb-12 tracking-[0.3em] uppercase text-zinc-400 italic">SERVICE LOG</h3>
@@ -599,11 +598,12 @@ const TrackingView = ({ progress, setProgress, onNewOrder, orderId }: any) => {
             ].map((item, idx) => {
               const s = progress > idx ? 'done' : progress === idx ? 'active' : 'pending';
               return (
-              <div key={idx} className="flex gap-8 items-center relative z-10">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-black border-[3px] transition-all duration-700 ${s === 'done' ? 'bg-[#10b981] border-[#10b981] text-white shadow-lg' : s === 'active' ? 'bg-[#2D7D90] border-[#2D7D90] text-white shadow-xl scale-110' : 'bg-white border-zinc-100 text-zinc-300'}`}>{s === 'done' ? '✓' : idx + 1}</div>
-                <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${s === 'pending' ? 'text-zinc-300' : 'text-zinc-900'}`}>{item.label}</h4>
-              </div>
-            )})}
+                <div key={idx} className="flex gap-8 items-center relative z-10">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-black border-[3px] transition-all duration-700 ${s === 'done' ? 'bg-[#10b981] border-[#10b981] text-white shadow-lg' : s === 'active' ? 'bg-[#2D7D90] border-[#2D7D90] text-white shadow-xl scale-110' : 'bg-white border-zinc-100 text-zinc-300'}`}>{s === 'done' ? '✓' : idx + 1}</div>
+                  <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${s === 'pending' ? 'text-zinc-300' : 'text-zinc-900'}`}>{item.label}</h4>
+                </div>
+              )
+            })}
           </div>
         </Card>
 
@@ -617,12 +617,12 @@ function App() {
 
   const [view, setView] = useState<'landing' | 'menu' | 'checkout' | 'tracking'>('landing');
   const [cart, setCart] = useState(() => {
-  const saved = localStorage.getItem('cyberwait_cart');
-  return saved ? JSON.parse(saved) : [];
-});
+    const saved = localStorage.getItem('cyberwait_cart');
+    return saved ? JSON.parse(saved) : [];
+  });
   useEffect(() => {
-  localStorage.setItem('cyberwait_cart', JSON.stringify(cart));
-}, [cart]);
+    localStorage.setItem('cyberwait_cart', JSON.stringify(cart));
+  }, [cart]);
   const [isOrderActive, setIsOrderActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
@@ -682,16 +682,16 @@ function App() {
     if (isOrderActive) return;
     setCart(prev => prev.map(ci => ci.item.id === itemId ? { ...ci, quantity: Math.max(0, ci.quantity + delta) } : ci).filter(ci => ci.quantity > 0));
   };
-  
+
   const clearCart = () => {
     if (!isOrderActive) setCart([]);
   };
-  
+
   const cartTotal = useMemo(() => cart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((acc, curr) => acc + curr.quantity, 0), [cart]);
 
-  useEffect(() => { 
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [view]);
 
   // If served, order is no longer active AND cart is cleared
@@ -723,7 +723,9 @@ function App() {
       setCurrentOrderId(orderId ?? null);
     } catch (err) {
       console.error('Place order error:', err);
-      const orderId = Math.floor(Math.random() * 1000000);
+      // Fallback to client-side insert if local API is not running
+      const order = await placeOrder(cart, cartTotal);
+      const orderId = order ? order.id : Math.floor(Math.random() * 1000000);
       setCurrentOrderId(orderId);
     } finally {
       setIsOrderActive(true);
@@ -785,8 +787,8 @@ function App() {
           </div>
         </div>
         {view !== 'landing' && !isOrderActive && (
-          <button 
-            onClick={() => setView(view === 'checkout' ? 'menu' : 'checkout')} 
+          <button
+            onClick={() => setView(view === 'checkout' ? 'menu' : 'checkout')}
             className="relative p-4 md:p-5 bg-white border-2 border-zinc-100 rounded-[1.8rem] hover:border-[#2D7D90] transition-all shadow-md active:scale-90 group"
           >
             <CartIcon />
@@ -797,30 +799,30 @@ function App() {
       <main className="pt-32 md:pt-48 flex-grow">
         {view === 'landing' && <LandingView onStart={() => setView('menu')} />}
         {view === 'menu' && (
-          <MenuView 
-            onAddToCart={addToCart} 
-            onCheckout={() => setView('checkout')} 
-            cartCount={cartCount} 
-            cartTotal={cartTotal} 
+          <MenuView
+            onAddToCart={addToCart}
+            onCheckout={() => setView('checkout')}
+            cartCount={cartCount}
+            cartTotal={cartTotal}
             isOrderActive={isOrderActive}
             menuItems={menuItems}
           />
         )}
         {view === 'checkout' && (
-          <CheckoutView 
-            cart={cart} 
-            updateCart={updateCart} 
-            clearCart={clearCart} 
-            onComplete={handlePlaceOrder} 
-            onBack={() => setView('menu')} 
+          <CheckoutView
+            cart={cart}
+            updateCart={updateCart}
+            clearCart={clearCart}
+            onComplete={handlePlaceOrder}
+            onBack={() => setView('menu')}
             isOrderActive={isOrderActive}
             // expose client-side test helper only in dev
             onClientOrder={import.meta.env.DEV ? () => placeOrder(cart, cartTotal) : undefined}
           />
         )}
         {view === 'tracking' && (
-          <TrackingView 
-            progress={progress} 
+          <TrackingView
+            progress={progress}
             setProgress={setProgress}
             onNewOrder={handleNewOrderStart}
             orderId={currentOrderId}
